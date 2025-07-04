@@ -1,7 +1,5 @@
 #include <KHR/khrplatform.h>
 #include <iostream>
-#include <chrono>
-#include <thread>
 #include <vector>
 #include <windows.h>
 #include <glad/glad.h>
@@ -11,7 +9,6 @@
 GLFWwindow *init_window();
 void create_full_screen_quad();
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void process_input(GLFWwindow *window);
 void error_callback(int error, const char* description);
 
 // settings
@@ -27,17 +24,7 @@ int main() {
 
     Shader shaders("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
 
-    std::vector<uint8_t> canvas(SCREEN_HEIGHT * SCREEN_WIDTH * 4, 255);
-    // TODO: Remove checkerboard pattern test
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-        for (int x = 0; x < SCREEN_WIDTH; x++) {
-            if ((x + y) % 2 == 0) {
-                for (int c = 0; c < 3; c++) {
-                    canvas[y*SCREEN_WIDTH*4 + x*4 + c] = 0;
-                }
-            }
-        }
-    }
+    std::vector<uint8_t> canvas(SCREEN_WIDTH * SCREEN_HEIGHT * 4, 255);
 
     // generate texture
     GLuint canvas_texture;
@@ -46,24 +33,54 @@ int main() {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, canvas.data());
     glGenerateMipmap(GL_TEXTURE_2D);
 
+    int t = 0;
+    double last_update_time = 0.0;
     while(!glfwWindowShouldClose(window))
     {
-        double frame_start_time = glfwGetTime();
+        double loop_start_time = 0.0;
 
-        process_input(window);
+        // process inputs
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window, true);
+        }
+        int left_mouse_state = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
+        if (left_mouse_state == GLFW_PRESS) {
+            // fill in circle in canvas with black.
+            double CIRCLE_RADIUS_SQUARED = 20 * 20;
+            for (int y = 0; y < SCREEN_HEIGHT; y++) {
+                for (int x = 0; x < SCREEN_WIDTH; x++) {
+                    double x_pos, y_pos;
+                    glfwGetCursorPos(window, &x_pos, &y_pos);
+                    bool should_be_filled = (x_pos - x) * (x_pos - x) + (y_pos - y) * (y_pos - y) <= CIRCLE_RADIUS_SQUARED;
+                    if (should_be_filled) {
+                        int curr_pixel_index = y * SCREEN_WIDTH * 4 + x * 4;
+                        for (int i = 0; i < 3; i++) {
+                            canvas[curr_pixel_index+i] = 0;
+                        }
+                    }
+                }
+            }
+        }
 
         shaders.use();
-        // TODO: Change this to reload every frame
+
+        // send the canvas texture to the GPU
         glBindTexture(GL_TEXTURE_2D, canvas_texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, canvas.data());
+        glGenerateMipmap(GL_TEXTURE_2D);
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();    
 
-        double dt = frame_start_time - glfwGetTime();
-        if (dt < FRAME_DURATION) {
-            double sleep_time = FRAME_DURATION - dt;
-            std::this_thread::sleep_for(std::chrono::duration<double>(sleep_time));
+        double dt = glfwGetTime() - last_update_time;
+        printf("fps: %.2f\n", 1.0 / dt);
+
+        if (glfwGetTime() - last_update_time >= FRAME_DURATION) {
+
+            glfwSwapBuffers(window);
+            glfwPollEvents();    
+
+            last_update_time = glfwGetTime();
         }
     }
 
@@ -75,10 +92,10 @@ int main() {
 void create_full_screen_quad() {
     float vertices[] = {
         // positions       texture_coords
-        -1.0, -1.0, 0.0f,  0.0, 0.0, // bottom left
-         1.0, -1.0, 0.0f,  0.0, 1.0, // bottom right
-         1.0,  1.0, 0.0f,  1.0, 1.0, // top right
-        -1.0,  1.0, 0.0f,  1.0, 0.0, // top left
+        -1.0, -1.0, 0.0f,  0.0, 1.0, // bottom left
+         1.0, -1.0, 0.0f,  1.0, 1.0, // bottom right
+         1.0,  1.0, 0.0f,  1.0, 0.0, // top right
+        -1.0,  1.0, 0.0f,  0.0, 0.0, // top left
     };    
     unsigned int indices[] = {
         0, 1, 2,
@@ -103,11 +120,6 @@ void create_full_screen_quad() {
     glEnableVertexAttribArray(1); 
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
-}
-
-void process_input(GLFWwindow *window) {
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
