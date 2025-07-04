@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <vector>
 #include <windows.h>
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
@@ -14,8 +15,8 @@ void process_input(GLFWwindow *window);
 void error_callback(int error, const char* description);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCREEN_WIDTH = 800;
+const unsigned int SCREEN_HEIGHT = 600;
 const double TARGET_FPS = 60.0;
 const double FRAME_DURATION = 1.0 / TARGET_FPS; // in seconds
 
@@ -26,6 +27,25 @@ int main() {
 
     Shader shaders("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
 
+    std::vector<uint8_t> canvas(SCREEN_HEIGHT * SCREEN_WIDTH * 4, 255);
+    // TODO: Remove checkerboard pattern test
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+        for (int x = 0; x < SCREEN_WIDTH; x++) {
+            if ((x + y) % 2 == 0) {
+                for (int c = 0; c < 3; c++) {
+                    canvas[y*SCREEN_WIDTH*4 + x*4 + c] = 0;
+                }
+            }
+        }
+    }
+
+    // generate texture
+    GLuint canvas_texture;
+    glGenTextures(1, &canvas_texture);
+    glBindTexture(GL_TEXTURE_2D, canvas_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, SCREEN_WIDTH, SCREEN_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, canvas.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     while(!glfwWindowShouldClose(window))
     {
         double frame_start_time = glfwGetTime();
@@ -33,6 +53,8 @@ int main() {
         process_input(window);
 
         shaders.use();
+        // TODO: Change this to reload every frame
+        glBindTexture(GL_TEXTURE_2D, canvas_texture);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glfwSwapBuffers(window);
@@ -52,10 +74,11 @@ int main() {
 
 void create_full_screen_quad() {
     float vertices[] = {
-        -1.0, -1.0, 0.0f,
-        1.0, -1.0, 0.0f,
-        1.0, 1.0, 0.0f,
-        -1.0, 1.0, 0.0f,
+        // positions       texture_coords
+        -1.0, -1.0, 0.0f,  0.0, 0.0, // bottom left
+         1.0, -1.0, 0.0f,  0.0, 1.0, // bottom right
+         1.0,  1.0, 0.0f,  1.0, 1.0, // top right
+        -1.0,  1.0, 0.0f,  1.0, 0.0, // top left
     };    
     unsigned int indices[] = {
         0, 1, 2,
@@ -74,8 +97,10 @@ void create_full_screen_quad() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (void*) 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*) 0);
     glEnableVertexAttribArray(0); 
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*) (3 * sizeof(float)));
+    glEnableVertexAttribArray(1); 
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
 }
@@ -106,7 +131,7 @@ GLFWwindow *init_window() {
     glfwSetErrorCallback(error_callback);
 
     // create window
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "My First Window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "My First Window", NULL, NULL);
     if (window == NULL) {
         std::cerr << "Failed to create GLFW window" << std::endl;
         glfwTerminate();
