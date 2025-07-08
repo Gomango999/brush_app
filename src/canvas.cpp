@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <vector>
+#include <iostream>
 
 #include "bounding_box.hpp"
 #include "color.hpp"
@@ -9,10 +10,19 @@
 const size_t Canvas::N_CHANNELS = 4;
 const unsigned int Canvas::MAX_BRUSH_RADIUS = 1000;
 
-Canvas::Canvas(size_t _width, size_t _height) {
-    m_width = _width;
-    m_height = _height;
+Canvas::Canvas(size_t width, size_t height) {
+    std::cout << "Hello\n";
+    m_width = width;
+    m_height = height;
     m_canvas.assign(m_height * m_width * N_CHANNELS, 255);
+}
+
+size_t Canvas::width() {
+    return m_width;
+}
+
+size_t Canvas::height() {
+    return m_height;
 }
 
 void Canvas::set_pixel(size_t x, size_t y, Color color) {

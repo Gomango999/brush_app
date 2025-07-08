@@ -21,6 +21,9 @@ private:
 public:
     Canvas(size_t _width, size_t _height);
 
+    size_t width();
+    size_t height();
+
     void set_pixel(size_t x, size_t y, Color color);
 
     void fill_circle(
