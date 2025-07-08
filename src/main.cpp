@@ -1,12 +1,17 @@
-#include <KHR/khrplatform.h>
 #include <iostream>
+#include <cassert>
+#include <optional>
 #include <vector>
-#include <windows.h>
+
 #include <glad/glad.h>
 #include <glfw/glfw3.h>
-#include "shader.h"
-#include <optional>
-#include <cassert>
+#include <KHR/khrplatform.h>
+#include <windows.h>
+
+#include "bounding_box.hpp"
+#include "canvas.hpp"
+#include "color.hpp"
+#include "shader.hpp"
 
 GLFWwindow *init_window();
 void create_full_screen_quad();
@@ -21,25 +26,6 @@ const unsigned int CANVAS_HEIGHT = 8000;
 const double TARGET_FPS = 60.0;
 const double FRAME_DURATION = 1.0 / TARGET_FPS; // in seconds
 
-struct BoundingBox {
-    size_t top;
-    size_t bottom;
-    size_t left;
-    size_t right;
-
-    size_t width() const {
-        return right - left;
-    }
-
-    size_t height() const {
-        return bottom - top;
-    }
-
-    size_t area() const {
-        return width() * height();
-    }
-};
-
 int main() {
     GLFWwindow *window = init_window();
 
@@ -49,15 +35,14 @@ int main() {
     // load shaders
     Shader shaders("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
 
-    // generate canvas texture
-    std::vector<uint8_t> canvas(CANVAS_WIDTH * CANVAS_HEIGHT * 4, 255);
+    Canvas canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
 
+    // generate canvas texture
     GLuint g_canvas;
     glGenTextures(1, &g_canvas);
     glBindTexture(GL_TEXTURE_2D, g_canvas);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CANVAS_WIDTH, CANVAS_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, canvas.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
 
     int t = 0;
     double last_update_time = 0.0;
@@ -85,40 +70,23 @@ int main() {
 
             // fill in circle in canvas with black.
             double CIRCLE_RADIUS = 200;
-            double CIRCLE_RADIUS_SQUARED = CIRCLE_RADIUS * CIRCLE_RADIUS;
+
+            canvas.fill_circle(x_pos, y_pos, CIRCLE_RADIUS, BLACK);
 
             size_t y_start = std::max(0u, (unsigned int)(y_pos - CIRCLE_RADIUS));
             size_t y_end = std::min(CANVAS_HEIGHT, (unsigned int)(y_pos + CIRCLE_RADIUS + 1));
             size_t x_start = std::max(0u, (unsigned int)(x_pos - CIRCLE_RADIUS));
             size_t x_end = std::min(CANVAS_WIDTH, (unsigned int)(x_pos + CIRCLE_RADIUS + 1));
 
-            data_to_update.clear();
-
-            for (int y = y_start; y < y_end; y++) {
-                for (int x = x_start; x < x_end; x++) {
-                    int curr_pixel_index = y * CANVAS_WIDTH * 4 + x * 4;
-
-                    bool should_be_filled = (x_pos - x) * (x_pos - x) + (y_pos - y) * (y_pos - y) <= CIRCLE_RADIUS_SQUARED;
-                    if (should_be_filled) {
-                        for (int i = 0; i < 3; i++) {
-                            canvas[curr_pixel_index+i] = 0u;
-                        }
-                    }
-
-                    for (int i = 0; i < 4; i++) {
-                        data_to_update.push_back(canvas[curr_pixel_index+i]);
-                    }
-                }
-            }
-
             bbox_to_update_opt = {y_start, y_end, x_start, x_end};
         }
 
-        shaders.use();
 
         // if there is something to update, update the texture.
         if (bbox_to_update_opt.has_value()) {
             BoundingBox bbox_to_update = bbox_to_update_opt.value();
+            canvas.set_data_within_bounding_box(data_to_update, bbox_to_update);
+
             glBindTexture(GL_TEXTURE_2D, g_canvas);
             glTexSubImage2D(
                 GL_TEXTURE_2D, 0,
@@ -129,21 +97,20 @@ int main() {
             );
         }
 
-        // draw the canvas
+        // draw to the canvas
+        shaders.use();
         glBindTexture(GL_TEXTURE_2D, g_canvas);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, CANVAS_WIDTH, CANVAS_HEIGHT, 0, GL_RGBA, GL_UNSIGNED_BYTE, canvas.data());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        double dt = glfwGetTime() - loop_start_time;
-        printf("dt: %.9f\n", dt);
-
         if (glfwGetTime() - last_update_time >= FRAME_DURATION) {
-
             glfwSwapBuffers(window);
             glfwPollEvents();    
 
             last_update_time = glfwGetTime();
         }
+
+        double dt = glfwGetTime() - loop_start_time;
+        printf("dt: %.9f\n", dt);
     }
 
     glfwTerminate();

@@ -6,7 +6,7 @@ set INCLUDES=-IC:\cpp_libs\include -I.\include
 set LIBS=-LC:\cpp_libs\lib -lglfw3 -lgdi32
 
 :: Source files and output
-set SOURCES=src\main.cpp C:\cpp_libs\src\glad\glad.c
+set SOURCES=src\main.cpp src\canvas.cpp C:\cpp_libs\src\glad\glad.c
 set OUTFILE=a.exe
 
 echo Compiling %OUTFILE%...
