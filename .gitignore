@@ -1,4 +1,6 @@
+build/
 .vscode
 .clangd
 *.exe
 *.o
+imgui.ini
