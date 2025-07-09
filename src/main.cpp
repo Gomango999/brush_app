@@ -7,14 +7,10 @@ const unsigned int CANVAS_HEIGHT = 8000;
 
 int main() {
 
-    printf("Initialised!");
-    
     auto app = App(
         SCREEN_WIDTH, SCREEN_HEIGHT, 
         CANVAS_WIDTH, CANVAS_HEIGHT
     );
-
-    printf("Initialised!");
 
     app.run();
     

@@ -56,9 +56,7 @@ public:
         unsigned int vertex, fragment;
         
         // vertex shader
-        std::cout << "Test";
         vertex = glCreateShader(GL_VERTEX_SHADER);
-        std::cout << "Test";
         glShaderSource(vertex, 1, &vShaderCode, NULL);
         glCompileShader(vertex);
         checkCompileErrors(vertex, "VERTEX");

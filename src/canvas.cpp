@@ -11,7 +11,6 @@ const size_t Canvas::N_CHANNELS = 4;
 const unsigned int Canvas::MAX_BRUSH_RADIUS = 1000;
 
 Canvas::Canvas(size_t width, size_t height) {
-    std::cout << "Hello\n";
     m_width = width;
     m_height = height;
     m_canvas.assign(m_height * m_width * N_CHANNELS, 255);

@@ -39,10 +39,12 @@ private:
     std::queue<BoundingBox> handle_inputs();
     std::optional<BoundingBox> handle_left_click(double x_pos, double y_pos);
     void handle_update_bboxes(std::vector<uint8_t>& update_data, std::queue<BoundingBox>& update_bboxes);
+    void display_interface();
     void draw();
 
-    GLFWwindow* init_window();
+    GLFWwindow* initialise_window();
     void create_and_bind_full_screen_quad();
     GLuint generate_gpu_canvas_texture();
+    void initialise_imgui();
 };
 

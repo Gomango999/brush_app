@@ -1,5 +1,9 @@
 #include <iostream>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include "app.hpp"
 
 App::App(
@@ -12,10 +16,11 @@ App::App(
       m_screen_height(screen_height),
       m_canvas(canvas_width, canvas_height)
 {
-    m_window = init_window();
+    m_window = initialise_window();
     create_and_bind_full_screen_quad();
     m_shaders.init("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
     m_gpu_canvas_texture = generate_gpu_canvas_texture();
+    initialise_imgui();
 }
 
 void App::run() {
@@ -25,11 +30,18 @@ void App::run() {
     while (!glfwWindowShouldClose(m_window)) {
         double loop_start_time = glfwGetTime();
 
+
         update(data_to_update);
+
 
         double dt = glfwGetTime() - loop_start_time;
         printf("dt: %.9f\n", dt);
     }
+
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     glfwTerminate();
 }
@@ -38,11 +50,14 @@ void App::update(std::vector<uint8_t>& data_to_update) {
     double loop_start_time = glfwGetTime();
     std::queue<BoundingBox> update_bboxes = handle_inputs();
     handle_update_bboxes(data_to_update, update_bboxes);
+    display_interface();
     draw();
 }
 
 std::queue<BoundingBox> App::handle_inputs() {
     std::queue<BoundingBox> update_bboxes;
+
+    glfwPollEvents();
 
     if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(m_window, true);
@@ -62,6 +77,8 @@ std::queue<BoundingBox> App::handle_inputs() {
 }
 
 std::optional<BoundingBox> App::handle_left_click(double x_pos, double y_pos) {
+    // BUG: `m_screen_width` and `m_screen_height` are not changed on window resize
+    // leading to incorrect calculations here. 
     x_pos = (x_pos / m_screen_width) * m_canvas.width();
     y_pos = (y_pos / m_screen_height) * m_canvas.height();
 
@@ -98,15 +115,24 @@ void App::handle_update_bboxes(
     }
 }
 
+void App::display_interface() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::ShowDemoWindow(); 
+}
+
 void App::draw() {
     m_shaders.use();
 
     glBindTexture(GL_TEXTURE_2D, m_gpu_canvas_texture);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     if (glfwGetTime() - m_last_update_time >= (1.0 / 60.0)) {
         glfwSwapBuffers(m_window);
-        glfwPollEvents();
 
         m_last_update_time = glfwGetTime();
     }
@@ -120,7 +146,7 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-GLFWwindow* App::init_window() {
+GLFWwindow* App::initialise_window() {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         exit(EXIT_FAILURE);
@@ -195,3 +221,12 @@ GLuint App::generate_gpu_canvas_texture() {
     return gpu_canvas_texture;
 }
 
+void App::initialise_imgui() {
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGui_ImplGlfw_InitForOpenGL(m_window, true);     
+    ImGui_ImplOpenGL3_Init();
+}
