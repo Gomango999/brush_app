@@ -24,6 +24,8 @@ set(SOURCES
     src/main.cpp
     src/app.cpp
     src/canvas.cpp
+    src/gui.cpp
+    src/window.cpp
     ${GLAD_SRC}
     ${IMGUI_SRC}
 )
