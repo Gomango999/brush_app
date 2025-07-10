@@ -24,13 +24,13 @@ public:
     size_t width();
     size_t height();
 
-    void set_pixel(size_t x, size_t y, Color color);
+    void set_pixel(size_t x, size_t y, ImColor color);
 
     void fill_circle(
-        size_t center_x,
-        size_t center_y,
-        unsigned int radius,
-        Color color
+        size_t center_x, 
+        size_t center_y, 
+        unsigned int radius, 
+        ImColor color
     );
 
     // Stores the pixel data within the bounding box inside `data` 

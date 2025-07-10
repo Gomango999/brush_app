@@ -6,23 +6,48 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #include "bounding_box.hpp"
 #include "canvas.hpp"
 #include "color.hpp"
 #include "shader.hpp"
 
+struct BrushState {
+    ImVec4 color;
+    float radius;
+    float opacity;
+
+    BrushState() {
+        color = ImVec4(0.0, 0.0, 0.0, 1.0);
+        radius = 200.0;
+        opacity = 1.0;
+    };
+};
+
+// TODO: Separate out the OpenGL Rendering part from the actual app functionality.
 class App {
 private:
     unsigned int m_screen_width;
     unsigned int m_screen_height;
+    unsigned int m_canvas_display_width;
+    unsigned int m_canvas_display_height;
 
     GLFWwindow* m_window;
     Shader m_shaders;
     Canvas m_canvas;
     GLuint m_gpu_canvas_texture;
+    // TODO: Come up with a better name for this.
+    std::vector<uint8_t> m_update_data;
+
+    BrushState brush_state;
+
+    ImVec2 canvas_window_pos;
 
     double m_last_update_time;
+    double m_last_dt;
 
 public:
     App(
@@ -35,12 +60,12 @@ public:
     void run();
 
 private:
-    void update(std::vector<uint8_t>& data_to_update);
-    std::queue<BoundingBox> handle_inputs();
-    std::optional<BoundingBox> handle_left_click(double x_pos, double y_pos);
-    void handle_update_bboxes(std::vector<uint8_t>& update_data, std::queue<BoundingBox>& update_bboxes);
-    void display_interface();
-    void draw();
+    void update();
+    void handle_inputs();
+    std::optional<BoundingBox> handle_left_click(ImVec2 pos);
+    void handle_update_bbox(BoundingBox bbox);
+    void define_imgui_interface();
+    void render();
 
     GLFWwindow* initialise_window();
     void create_and_bind_full_screen_quad();

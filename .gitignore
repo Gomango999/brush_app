@@ -3,4 +3,3 @@ build/
 .clangd
 *.exe
 *.o
-imgui.ini

@@ -1,7 +1,7 @@
 #include "app.hpp"
 
-const unsigned int SCREEN_WIDTH = 800;
-const unsigned int SCREEN_HEIGHT = 800;
+const unsigned int SCREEN_WIDTH = 2560;
+const unsigned int SCREEN_HEIGHT = 1440;
 const unsigned int CANVAS_WIDTH = 8000;
 const unsigned int CANVAS_HEIGHT = 8000;
 

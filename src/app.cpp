@@ -1,9 +1,5 @@
 #include <iostream>
 
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-
 #include "app.hpp"
 
 App::App(
@@ -14,28 +10,29 @@ App::App(
 )
     : m_screen_width(screen_width),
       m_screen_height(screen_height),
-      m_canvas(canvas_width, canvas_height)
+      m_canvas(canvas_width, canvas_height),
+      // TODO: To be removed when we implement zooming. For now we just
+      // hard code the canvas's size on the screen.
+      m_canvas_display_width(800),
+      m_canvas_display_height(800)
 {
     m_window = initialise_window();
     create_and_bind_full_screen_quad();
     m_shaders.init("src/shaders/vertex.glsl", "src/shaders/fragment.glsl");
     m_gpu_canvas_texture = generate_gpu_canvas_texture();
+    m_update_data.reserve(m_canvas.width() * m_canvas.height() * 4);
     initialise_imgui();
 }
 
 void App::run() {
     std::vector<uint8_t> data_to_update;
-    data_to_update.reserve(m_canvas.width() * m_canvas.height() * 4);
 
     while (!glfwWindowShouldClose(m_window)) {
         double loop_start_time = glfwGetTime();
 
+        update();
 
-        update(data_to_update);
-
-
-        double dt = glfwGetTime() - loop_start_time;
-        printf("dt: %.9f\n", dt);
+        m_last_dt = glfwGetTime() - loop_start_time;
     }
 
 
@@ -46,87 +43,127 @@ void App::run() {
     glfwTerminate();
 }
 
-void App::update(std::vector<uint8_t>& data_to_update) {
-    double loop_start_time = glfwGetTime();
-    std::queue<BoundingBox> update_bboxes = handle_inputs();
-    handle_update_bboxes(data_to_update, update_bboxes);
-    display_interface();
-    draw();
+void App::update() {
+    handle_inputs();
+    define_imgui_interface();
+    render();
 }
 
-std::queue<BoundingBox> App::handle_inputs() {
-    std::queue<BoundingBox> update_bboxes;
-
+void App::handle_inputs() {
     glfwPollEvents();
 
     if (glfwGetKey(m_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(m_window, true);
     }
+}
 
-    int left_mouse_state = glfwGetMouseButton(m_window, GLFW_MOUSE_BUTTON_LEFT);
-    if (left_mouse_state == GLFW_PRESS) {
-        double x_pos, y_pos;
-        glfwGetCursorPos(m_window, &x_pos, &y_pos);
-        std::optional<BoundingBox> bbox = handle_left_click(x_pos, y_pos);
-        if (bbox.has_value()) {
-            update_bboxes.push(bbox.value());
+
+void App::define_imgui_interface() {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+    ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+    
+    ImGui::Begin("Color");
+    ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_None;
+    ImGui::ColorEdit4("Color", (float*) &brush_state.color, base_flags);
+    ImGui::End();
+
+    ImGui::Begin("Brush");
+    ImGui::SliderFloat("Size", &brush_state.radius, 1.0f, 1000.0f, "%f");
+    ImGui::SliderFloat("Opacity", &brush_state.opacity, 0.0f, 1.0f);
+    ImGui::End();
+
+
+    ImGuiWindowFlags window_flags = 0;
+    window_flags |= ImGuiWindowFlags_NoTitleBar;
+    ImGui::Begin("Canvas", nullptr, window_flags);
+
+    int canvas_width, canvas_height;
+    glBindTexture(GL_TEXTURE_2D, m_gpu_canvas_texture);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_WIDTH, &canvas_width);
+    glGetTexLevelParameteriv(GL_TEXTURE_2D, 0, GL_TEXTURE_HEIGHT, &canvas_height);
+
+    // TODO: Probably don't want ImGUI to handle this input, rather I should dispatch 
+    // it to my underlying app.
+
+    // Draw to texture if mouse is clicked 
+    ImVec2 mouse_pos = ImVec2(0, 0);
+    if (ImGui::IsWindowHovered()) {
+        ImVec2 absolute_mouse_pos = ImGui::GetMousePos();
+        ImVec2 window_pos = ImGui::GetCursorScreenPos();
+        mouse_pos = ImVec2(
+            absolute_mouse_pos.x - window_pos.x,
+            absolute_mouse_pos.y - window_pos.y
+        );
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Left)) {
+            std::optional<BoundingBox> bbox = handle_left_click(mouse_pos);
+            if (bbox.has_value()) {
+                handle_update_bbox(bbox.value());
+            }
         }
     }
 
-    return update_bboxes;
+    ImTextureID canvas_texture = (ImTextureID)(intptr_t)m_gpu_canvas_texture;
+    ImGui::Image(canvas_texture, ImVec2(m_canvas_display_width, m_canvas_display_height));
+    ImGui::End();
+
+    ImGui::Begin("Debug");
+    // We write to a buffer first, since ImGui doesn't provide enough precision
+    // otherwise
+    char buffer[64];
+    snprintf(buffer, sizeof(buffer), "%.9f", m_last_dt);
+    ImGui::LabelText("dt", buffer);
+    snprintf(buffer, sizeof(buffer), "%.1f", 1.0 / m_last_dt);
+    ImGui::LabelText("fps", buffer);
+
+    snprintf(buffer, sizeof(buffer), "(%d, %d)", (int)mouse_pos.x, (int)mouse_pos.y);
+    ImGui::LabelText("mouse position", buffer);
+    ImGui::End();
+
+
+    ImGui::Begin("Layers");
+    ImGui::Text("Unimplemented");
+    ImGui::End();
 }
 
-std::optional<BoundingBox> App::handle_left_click(double x_pos, double y_pos) {
-    // BUG: `m_screen_width` and `m_screen_height` are not changed on window resize
-    // leading to incorrect calculations here. 
-    x_pos = (x_pos / m_screen_width) * m_canvas.width();
-    y_pos = (y_pos / m_screen_height) * m_canvas.height();
+std::optional<BoundingBox> App::handle_left_click(ImVec2 pos) {
+    // convert coordinates into coordinates on the canvas.
+    pos = ImVec2(
+        (pos.x / m_canvas_display_width) * m_canvas.width(),
+        (pos.y / m_canvas_display_height) * m_canvas.height()
+    );
 
-    double CIRCLE_RADIUS = 200;
-    m_canvas.fill_circle(x_pos, y_pos, CIRCLE_RADIUS, BLACK);
+    double CIRCLE_RADIUS = brush_state.radius;
+    m_canvas.fill_circle(pos.x, pos.y, CIRCLE_RADIUS, brush_state.color);
 
-    size_t y_start = std::max(0, int(y_pos - CIRCLE_RADIUS));
-    size_t y_end = std::min(int(m_canvas.height()), int(y_pos + CIRCLE_RADIUS + 1));
-    size_t x_start = std::max(0, int(x_pos - CIRCLE_RADIUS));
-    size_t x_end = std::min(int(m_canvas.width()), int(x_pos + CIRCLE_RADIUS + 1));
+    size_t y_start = std::max(0, int(pos.y - CIRCLE_RADIUS));
+    size_t y_end = std::min(int(m_canvas.height()), int(pos.y + CIRCLE_RADIUS + 1));
+    size_t x_start = std::max(0, int(pos.x - CIRCLE_RADIUS));
+    size_t x_end = std::min(int(m_canvas.width()), int(pos.x + CIRCLE_RADIUS + 1));
 
     BoundingBox bbox = {y_start, y_end, x_start, x_end};
     return bbox;
 }
 
-void App::handle_update_bboxes(
-    std::vector<uint8_t>& update_data,
-    std::queue<BoundingBox>& update_bboxes
-) {
-    while (!update_bboxes.empty()) {
-        BoundingBox update_bbox = update_bboxes.front();
-        update_bboxes.pop();
-
-        m_canvas.set_data_within_bounding_box(update_data, update_bbox);
-
-        glBindTexture(GL_TEXTURE_2D, m_gpu_canvas_texture);
-        glTexSubImage2D(
-            GL_TEXTURE_2D, 0,
-            update_bbox.left, update_bbox.top,
-            update_bbox.width(), update_bbox.height(),
-            GL_RGBA, GL_UNSIGNED_BYTE,
-            update_data.data()
-        );
-    }
-}
-
-void App::display_interface() {
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-    ImGui::ShowDemoWindow(); 
-}
-
-void App::draw() {
-    m_shaders.use();
+void App::handle_update_bbox(BoundingBox bbox) {
+    m_canvas.set_data_within_bounding_box(m_update_data, bbox);
 
     glBindTexture(GL_TEXTURE_2D, m_gpu_canvas_texture);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    glTexSubImage2D(
+        GL_TEXTURE_2D, 0,
+        bbox.left, bbox.top,
+        bbox.width(), bbox.height(),
+        GL_RGBA, GL_UNSIGNED_BYTE,
+        m_update_data.data()
+    );
+}
+
+void App::render() {
+    // m_shaders.use();
+
+    // glBindTexture(GL_TEXTURE_2D, m_gpu_canvas_texture);
+    // glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -226,6 +263,7 @@ void App::initialise_imgui() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);     
     ImGui_ImplOpenGL3_Init();

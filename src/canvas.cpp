@@ -3,6 +3,8 @@
 #include <vector>
 #include <iostream>
 
+#include "imgui.h"
+
 #include "bounding_box.hpp"
 #include "color.hpp"
 #include "canvas.hpp"
@@ -24,19 +26,26 @@ size_t Canvas::height() {
     return m_height;
 }
 
-void Canvas::set_pixel(size_t x, size_t y, Color color) {
+void Canvas::set_pixel(size_t x, size_t y, ImColor color) {
+    ImU32 packed = (ImU32)color;
+
+    unsigned char r = (packed >> IM_COL32_R_SHIFT) & 0xFF;
+    unsigned char g = (packed >> IM_COL32_G_SHIFT) & 0xFF;
+    unsigned char b = (packed >> IM_COL32_B_SHIFT) & 0xFF;
+    unsigned char a = (packed >> IM_COL32_A_SHIFT) & 0xFF;;
+
     const int pixel_index = y * m_width * N_CHANNELS + x * N_CHANNELS;
-    m_canvas[pixel_index] = color.r;
-    m_canvas[pixel_index + 1] = color.g;
-    m_canvas[pixel_index + 2] = color.b;
-    m_canvas[pixel_index + 3] = color.a;
+    m_canvas[pixel_index] = r;
+    m_canvas[pixel_index + 1] = g;
+    m_canvas[pixel_index + 2] = b;
+    m_canvas[pixel_index + 3] = a;
 }
 
 void Canvas::fill_circle(
     size_t center_x, 
     size_t center_y, 
     unsigned int radius,
-    Color color
+    ImColor color
 ) {
     radius = std::min(radius, MAX_BRUSH_RADIUS);
     unsigned int circle_radius_squared = radius * radius;
