@@ -47,6 +47,7 @@ void GUI::define_interface(CanvasState canvas_state, GLuint canvas_texture, Debu
     ImGui::NewFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
     
+    // BUG: Program crashes when this is pressed.
     ImGui::Begin("Color");
     ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_None;
     ImGui::ColorEdit4("Color", (float*) &canvas_state.color, base_flags);

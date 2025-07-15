@@ -46,7 +46,7 @@ void App::handle_inputs() {
 
     if (glfwGetMouseButton(m_window.window(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         ImVec2 pos = get_mouse_position_on_canvas();
-        m_canvas.draw_circle_at_pos(pos);
+        m_canvas.draw_circle_at_pos(pos, 0);
     }
 }
 
