@@ -83,10 +83,14 @@ BoundingBox Canvas::fill_circle_in_layer(
     radius = std::min(radius, MAX_BRUSH_RADIUS);
     unsigned int circle_radius_squared = radius * radius;
 
-    size_t y_start = std::max(0, int(center_y) - int(radius));
-    size_t y_end = std::min(int(m_height), int(center_y + radius + 1));
-    size_t x_start = std::max(0, int(center_x) - int(radius));
-    size_t x_end = std::min(int(m_width), int(center_x + radius + 1));
+    auto clamp = [](int x, int minimum, int maximum) {
+        return std::max(minimum, std::min(x, maximum));
+    };
+
+    size_t y_start = clamp(int(center_y) - int(radius), 0, m_height);
+    size_t y_end = clamp(int(center_y) + int(radius) + 1, 0, m_height);
+    size_t x_start = clamp(int(center_x) - int(radius), 0, m_width);
+    size_t x_end = clamp(int(center_x) + int(radius) + 1, 0, m_width);
 
     for (int y = y_start; y < y_end; y++) {
         for (int x = x_start; x < x_end; x++) {
@@ -103,6 +107,9 @@ BoundingBox Canvas::fill_circle_in_layer(
 
 // TODO: Write tests for this function
 void Canvas::set_pixel_in_layer(size_t x, size_t y, LayerId layer_id, ImVec4 color) {
+    bool pixel_outside = x >= m_width || y >= m_height;
+    if (pixel_outside) return;
+
     PixelStack& pixel_stack = m_layer_stack[y][x];
 
     // If a layer with id matching `layer_id` exists, then `pixel_it`

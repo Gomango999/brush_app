@@ -20,7 +20,6 @@ GUI::GUI(GLFWwindow* window) {
     ImGui_ImplOpenGL3_Init();
 }
 
-
 GUI::~GUI() {
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplGlfw_Shutdown();
