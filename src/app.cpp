@@ -9,7 +9,7 @@ App::App(
 )
     : m_screen_width(screen_width),
       m_screen_height(screen_height),
-      // TODO: To be removed when we implement zooming. For now we just
+      // SOMEDAY: To be removed when we implement zooming. For now we just
       // hard code the canvas's display size on the screen.
       m_canvas_display_width(800),
       m_canvas_display_height(800),
@@ -60,7 +60,7 @@ ImVec2 App::get_mouse_position_on_canvas() {
     ImVec2 pos_on_canvas_window = 
         m_gui.get_mouse_position_on_canvas_window(mouse_x, mouse_y);
 
-    // TODO: When zoom is added, replace this calculation with something more
+    // SOMEDAY: When zoom is added, replace this calculation with something more
     // sophisticated.
     ImVec2 pos_on_canvas = ImVec2(
         pos_on_canvas_window.x / m_canvas_display_width * m_canvas.width(),

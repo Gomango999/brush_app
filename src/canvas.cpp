@@ -103,7 +103,7 @@ BoundingBox Canvas::fill_circle_in_layer(
     return BoundingBox{y_start, y_end, x_start, x_end};
 }
 
-// TODO: Write tests for this function
+// SOMEDAY: Write tests for this function
 void Canvas::set_pixel_in_layer(size_t x, size_t y, LayerId layer_id, ImVec4 color) {
     bool pixel_outside = x >= m_width || y >= m_height;
     if (pixel_outside) return;
@@ -140,7 +140,7 @@ void Canvas::set_pixel_in_layer(size_t x, size_t y, LayerId layer_id, ImVec4 col
     }
 }
 
-// TODO: Write tests for this
+// SOMEDAY: Write tests for this function
 ImVec4 blend_colors(ImVec4 color_1, ImVec4 color_2) {
     float blend_1 = 1.0 - color_2.w;
     float blend_2 = color_2.w;

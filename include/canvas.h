@@ -19,7 +19,6 @@ struct CanvasState {
     };
 };
 
-// TODO: Make these typedefs only exist within this header and canvas.cpp
 typedef size_t LayerId;
 typedef std::pair<ImVec4, LayerId> PixelInLayer;
 typedef std::vector<PixelInLayer> PixelStack;
