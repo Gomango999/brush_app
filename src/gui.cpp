@@ -40,13 +40,13 @@ void imgui_formatted_label_text(const char* label, const char* fmt, ...) {
     ImGui::LabelText(label, "%s", buffer);
 }
 
-void GUI::define_interface(CanvasState canvas_state, GLuint canvas_texture, DebugState debug_state) {
+CanvasState GUI::define_interface(CanvasState canvas_state, GLuint canvas_texture, DebugState debug_state) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
     
-    // BUG: Program crashes when this is pressed.
+    // BUG: Program still draws on canvas while selecting a colour.
     ImGui::Begin("Color");
     ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_None;
     ImGui::ColorEdit4("Color", (float*) &canvas_state.color, base_flags);
@@ -82,6 +82,8 @@ void GUI::define_interface(CanvasState canvas_state, GLuint canvas_texture, Debu
     ImGui::Begin("Layers");
     ImGui::Text("Unimplemented");
     ImGui::End();
+
+    return canvas_state;
 }
 
 ImVec2 GUI::get_mouse_position_on_canvas_window(double mouse_x, double mouse_y) {

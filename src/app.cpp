@@ -25,11 +25,12 @@ void App::run() {
         handle_inputs();
 
         DebugState debug_state = generate_debug_state();
-        m_gui.define_interface(
-            m_canvas.state(), 
+        CanvasState new_canvas_state = m_gui.define_interface(
+            m_canvas.get_state(), 
             m_canvas.gpu_texture(), 
             debug_state
         );
+        m_canvas.set_state(new_canvas_state);
 
         render();
 
@@ -50,6 +51,8 @@ void App::handle_inputs() {
     }
 }
 
+// TODO: This function feels like it doesn't belong in app.cpp
+// Maybe in m_window.cpp?
 ImVec2 App::get_mouse_position_on_canvas() {
     double mouse_x, mouse_y;
     glfwGetCursorPos(m_window.window(), &mouse_x, &mouse_y);

@@ -19,7 +19,7 @@ public:
     GUI(GLFWwindow* window);
     ~GUI();
 
-    void define_interface(CanvasState canvas_state, GLuint canvas_texture, DebugState debug_state);
+    CanvasState define_interface(CanvasState canvas_state, GLuint canvas_texture, DebugState debug_state);
 
     ImVec2 get_mouse_position_on_canvas_window(double mouse_x, double mouse_y);
 };

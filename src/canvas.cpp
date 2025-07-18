@@ -59,8 +59,6 @@ Canvas::Canvas(size_t width, size_t height) {
 }
 
 void Canvas::draw_circle_at_pos(ImVec2 mouse_pos, LayerId layer_id) {
-    // TODO: How does m_state even update? We only provide a copy of it externally?
-    // How does the GUI modify this value?
     BoundingBox bbox = fill_circle_in_layer(
         int(mouse_pos.x), 
         int(mouse_pos.y), 
@@ -144,8 +142,8 @@ void Canvas::set_pixel_in_layer(size_t x, size_t y, LayerId layer_id, ImVec4 col
 
 // TODO: Write tests for this
 ImVec4 blend_colors(ImVec4 color_1, ImVec4 color_2) {
-    float blend_1 = 1.0 - color_2.z;
-    float blend_2 = color_2.z;
+    float blend_1 = 1.0 - color_2.w;
+    float blend_2 = color_2.w;
     return ImVec4(
         color_1.x * blend_1 + color_2.x * blend_2,
         color_1.y * blend_1 + color_2.y * blend_2,
@@ -220,8 +218,12 @@ size_t Canvas::height() {
     return m_height;
 }
 
-CanvasState Canvas::state() {
+CanvasState Canvas::get_state() {
     return m_state;
+}
+
+void Canvas::set_state(CanvasState state) {
+    m_state = state;
 }
 
 GLuint Canvas::gpu_texture() {

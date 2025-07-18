@@ -43,7 +43,8 @@ public:
 
     size_t width();
     size_t height();
-    CanvasState state();
+    CanvasState get_state();
+    void set_state(CanvasState state);
     GLuint gpu_texture();
 
 private:
