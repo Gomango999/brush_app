@@ -11,17 +11,16 @@
 const size_t N_CHANNELS = 4;
 const unsigned int MAX_BRUSH_RADIUS = 1000;
 
-LayerStack initialise_layer_stack(size_t width, size_t height) {
-    ImVec4 white = ImVec4(1.0, 1.0, 1.0, 1.0);
-    size_t initial_layer_id = 0;
-    PixelInLayer pixel(white, initial_layer_id);
+void initialise_layer_stack(size_t width, size_t height, LayerStack &layer_stack) {
+    layer_stack.clear();
 
-    // SOMEDAY: Consider initialising a pixel stack of capacity 4 to reduce 
-    // reallocation.
-    PixelStack initial_pixel_stack{pixel};
-    std::vector<PixelStack> initial_row(width, initial_pixel_stack);
-    LayerStack intial_layer_stack(height, initial_row);
-    return intial_layer_stack;
+    layer_stack = LayerStack(
+        height,
+        std::vector<PixelStack>(
+            width,
+            PixelStack{}
+        )
+    );
 }
 
 GLuint generate_gpu_texture(size_t width, size_t height, uint8_t data[]) {
@@ -43,7 +42,8 @@ GLuint generate_gpu_texture(size_t width, size_t height, uint8_t data[]) {
 Canvas::Canvas(size_t width, size_t height) {
     m_width = width;
     m_height = height;
-    m_layer_stack = initialise_layer_stack(width, height);
+    m_base_color = ImVec4(1.0, 1.0, 1.0, 1.0);
+    initialise_layer_stack(m_width, m_height, m_layer_stack);
 
     m_output_image.assign(m_width * m_height * N_CHANNELS, 255);
     BoundingBox entire_image = {0, height, 0, width};
@@ -153,7 +153,7 @@ ImVec4 blend_colors(ImVec4 color_1, ImVec4 color_2) {
 }
 
 ImVec4 Canvas::calculate_output_pixel_color(size_t x, size_t y) {
-    ImVec4 final_color = ImVec4(0.0, 0.0, 0.0, 0.0);
+    ImVec4 final_color = m_base_color;
     for (auto [color, _] : m_layer_stack[y][x]) {
         final_color = blend_colors(final_color, color);
     }

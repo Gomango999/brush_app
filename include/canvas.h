@@ -30,9 +30,12 @@ typedef std::vector<std::vector<PixelStack>> LayerStack;
 class Canvas {
 private:
     size_t m_width, m_height;
+
+    ImVec4 m_base_color;
     LayerStack m_layer_stack;
     std::vector<uint8_t> m_output_image;
     GLuint m_gpu_texture;
+
     CanvasState m_state;
 
 public:

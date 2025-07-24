@@ -35,7 +35,13 @@ set(SOURCES
     ${IMGUI_SRC}
 )
 
-file(GLOB HEADER_FILES "include/*.h")
+set (HEADER_FILES
+    "include/app.h"
+    "include/bounding_box.h"
+    "include/canvas.h"
+    "include/gui.h"
+    "include/window.h"
+)
 
 add_executable(
     brush_app 
