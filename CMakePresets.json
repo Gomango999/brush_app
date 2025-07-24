@@ -7,23 +7,21 @@
   },
   "configurePresets": [
     {
-      "name": "debug",
-      "description": "Default Debug Build",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/debug",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_CXX_FLAGS_RELEASE": "-Og"
-      }
+        "name": "debug",
+        "description": "Default Debug Build",
+        "generator": "Visual Studio 17 2022",
+        "binaryDir": "${sourceDir}/build",
+        "cacheVariables": {
+            "CMAKE_BUILD_TYPE": "Debug"
+        }
     },
     {
       "name": "release",
       "description": "Release build with O3 optimization",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/release",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_CXX_FLAGS_RELEASE": "-O3"
+        "CMAKE_BUILD_TYPE": "Release"
       }
     }
   ]
