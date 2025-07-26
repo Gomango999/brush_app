@@ -1,5 +1,4 @@
 #pragma once
-#include <cstddef>
 
 struct BoundingBox {
     size_t top;

@@ -1,5 +1,10 @@
 
+#include "imgui.h"
+#include "imgui_impl_opengl3.h"
+
 #include "app.h"
+#include "canvas.h"
+#include "gui.h"
 
 App::App(
     unsigned int screen_width,
@@ -16,7 +21,13 @@ App::App(
       m_window("Brush App", screen_width, screen_height),
       m_gui(m_window.window()),
       m_canvas(canvas_width, canvas_height)
-{}
+{
+    m_last_dt = 0.0;
+    m_last_update_time = 0.0;
+
+    Layer::Id new_layer_id = m_canvas.insert_new_layer_above_selected();
+    m_canvas.user_state().selected_layer = new_layer_id;
+}
 
 void App::run() {
     while (!m_window.should_close()) {
@@ -25,12 +36,10 @@ void App::run() {
         handle_inputs();
 
         DebugState debug_state = generate_debug_state();
-        CanvasState new_canvas_state = m_gui.define_interface(
-            m_canvas.get_state(), 
-            m_canvas.gpu_texture(), 
+        m_gui.define_interface(
+            m_canvas,
             debug_state
         );
-        m_canvas.set_state(new_canvas_state);
 
         render();
 
@@ -47,7 +56,7 @@ void App::handle_inputs() {
 
     if (glfwGetMouseButton(m_window.window(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         ImVec2 pos = get_mouse_position_on_canvas();
-        m_canvas.draw_circle_at_pos(pos, 0);
+        m_canvas.draw_circle_at_pos(pos);
     }
 }
 

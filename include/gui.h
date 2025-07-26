@@ -1,6 +1,5 @@
 #pragma once
-
-#include <glad/glad.h>
+#include <glfw/glfw3.h>
 #include "imgui.h"
 
 #include "canvas.h"
@@ -19,7 +18,7 @@ public:
     GUI(GLFWwindow* window);
     ~GUI();
 
-    CanvasState define_interface(CanvasState canvas_state, GLuint canvas_texture, DebugState debug_state);
+    void define_interface(Canvas& canvas, DebugState debug_state);
 
     ImVec2 get_mouse_position_on_canvas_window(double mouse_x, double mouse_y);
 };
