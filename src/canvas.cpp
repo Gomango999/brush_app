@@ -204,7 +204,7 @@ void Canvas::set_pixel_in_layer(size_t x, size_t y, Layer::Id layer_id, ImVec4 c
 
     PixelStack& pixel_stack = m_layer_stack[y][x];
 
-    // find the layer if it exists, otherwise, find the insertion point (i.e. the 
+    // Find the layer if it exists, otherwise, find the insertion point (i.e. the 
     // position of the first layer that is higher than it)
     size_t layer_height = m_lookup_layer_by_id[layer_id]->height;
     auto pixel_it = std::find_if(
@@ -290,7 +290,7 @@ void Canvas::upload_full_pixel_data_to_gpu() {
 }
 
 void Canvas::upload_pixel_data_within_bbox_to_gpu(BoundingBox bbox) {
-    // collect pixel data from cpu side array
+    // Collect pixel data from cpu-side array
     static std::vector<uint8_t> pixels;
     pixels.reserve(m_width * m_height * N_CHANNELS);
     pixels.clear();
@@ -304,7 +304,7 @@ void Canvas::upload_pixel_data_within_bbox_to_gpu(BoundingBox bbox) {
         }
     }
 
-    // upload to gpu texture
+    // Upload to gpu texture
     glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
     glTexSubImage2D(
         GL_TEXTURE_2D, 0,
