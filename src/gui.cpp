@@ -96,20 +96,23 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
 
     ImGui::BeginChild("LayerList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
     for (auto& layer : std::views::reverse(canvas.get_layers())) {
-        bool is_selected = user_state.selected_layer.has_value() ?
-            layer.id == user_state.selected_layer.value() :
-            false;
-        std::string select_label = std::format("##layer_select{}", layer.id);
-        if (ImGui::Selectable(select_label.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-            user_state.selected_layer = layer.id;
+
+
+        bool visible = canvas.get_layer_visibility(layer.id);
+        std::string checkbox_label = std::format("##layer_visible_checkbox{}", layer.id);
+        if (ImGui::Checkbox(checkbox_label.c_str(), &visible)) {
+            canvas.set_layer_visibility(layer.id, visible);
         }
 
         ImGui::SameLine();
 
-        bool visible = canvas.get_layer_visibility(layer.id);
-        if (ImGui::Checkbox(layer.name.c_str(), &visible)) {
-            canvas.set_layer_visibility(layer.id, visible);
+        bool is_selected = user_state.selected_layer.has_value() ?
+            layer.id == user_state.selected_layer.value() :
+            false;
+        if (ImGui::Selectable(layer.name.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+            user_state.selected_layer = layer.id;
         }
+
     }
     ImGui::EndChild();
     ImGui::End();
