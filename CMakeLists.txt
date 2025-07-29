@@ -32,12 +32,6 @@ set(APP_SOURCES
     src/window.cpp
 )
 
-set(SOURCES
-    ${APP_SOURCES}
-    ${GLAD_SRC}
-    ${IMGUI_SRC}
-)
-
 set (HEADER_FILES
     "include/app.h"
     "include/bounding_box.h"
@@ -46,10 +40,13 @@ set (HEADER_FILES
     "include/window.h"
 )
 
-add_executable(
-    brush_app 
-    ${SOURCES}
-    ${HEADER_FILES}
+add_executable(brush_app 
+    ${APP_SOURCES}
+)
+
+target_sources(brush_app PRIVATE
+    ${GLAD_SRC}
+    ${IMGUI_SRC}
 )
 
 target_link_libraries(brush_app PRIVATE
