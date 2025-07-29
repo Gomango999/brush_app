@@ -286,7 +286,7 @@ void Canvas::update_output_image_within_bbox(BoundingBox bbox) {
 
 void Canvas::upload_full_pixel_data_to_gpu() {
     BoundingBox entire_image = { 0, m_height, 0, m_width };
-    update_output_image_within_bbox(entire_image);
+    upload_pixel_data_within_bbox_to_gpu(entire_image);
 }
 
 void Canvas::upload_pixel_data_within_bbox_to_gpu(BoundingBox bbox) {
