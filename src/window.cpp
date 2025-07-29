@@ -17,7 +17,7 @@ Window::Window(const char *title, size_t width, size_t height) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         exit(EXIT_FAILURE);
     }
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwSetErrorCallback(error_callback);

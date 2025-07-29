@@ -8,11 +8,14 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/external/imgui
     ${CMAKE_SOURCE_DIR}/external/imgui/backends
     C:/cpp_libs/include
+    C:/cpp_libs/include/glad-4.3
     C:/cpp_libs/lib/glfw-3.4.bin.WIN64/include
 )
 
+link_directories(C:/cpp_libs/lib/glfw-3.4.bin.WIN64/lib-vc2022)
+
 set(GLAD_SRC
-    C:/cpp_libs/src/glad/glad.c
+    C:/cpp_libs/src/glad-4.3/glad.c
 )
 
 file(GLOB IMGUI_SRC
@@ -49,18 +52,8 @@ add_executable(
     ${HEADER_FILES}
 )
 
-target_link_directories(brush_app PRIVATE
-    C:/cpp_libs/lib
-    C:/cpp_libs/lib/glfw-3.4.bin.WIN64/lib-vc2022
-)
-
 target_link_libraries(brush_app PRIVATE
     glfw3
     gdi32
 )
 
-
-
-set_property(SOURCE src/main.cpp PROPERTY VS_FOLDER "App Source")
-set_property(SOURCE src/main.h PROPERTY VS_FOLDER "App Source")
-set_property(SOURCE external/imgui/imgui.cpp PROPERTY VS_FOLDER "External/ImGui")
