@@ -124,7 +124,10 @@ void Canvas::delete_selected_layer() {
         }
     }
 
+    m_user_state.selected_layer = std::nullopt;
+
     update_full_output_image();
+    upload_full_pixel_data_to_gpu();
 }
 
 bool Canvas::get_layer_visibility(Layer::Id layer_id) {
@@ -267,8 +270,7 @@ void Canvas::set_pixel_in_output_image(size_t x, size_t y, ImVec4 color) {
     m_output_image[pixel_index + 3] = a;
 }
 
-void Canvas::update_full_output_image()
-{
+void Canvas::update_full_output_image() {
     BoundingBox entire_image = { 0, m_height, 0, m_width };
     update_output_image_within_bbox(entire_image);
 }
@@ -284,7 +286,7 @@ void Canvas::update_output_image_within_bbox(BoundingBox bbox) {
 
 void Canvas::upload_full_pixel_data_to_gpu() {
     BoundingBox entire_image = { 0, m_height, 0, m_width };
-    upload_pixel_data_within_bbox_to_gpu(entire_image);
+    update_output_image_within_bbox(entire_image);
 }
 
 void Canvas::upload_pixel_data_within_bbox_to_gpu(BoundingBox bbox) {
