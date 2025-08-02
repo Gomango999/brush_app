@@ -122,7 +122,7 @@ void Layer::write_pixel_on_allocated_tile(size_t x, size_t y, ImVec4 color) {
         0,
         x, y,
         1, 1,
-        texture_format,
+        GL_RGBA,
         GL_UNSIGNED_BYTE,
         pixel_color
     );
@@ -139,39 +139,22 @@ void Layer::write_pixel(size_t x, size_t y, ImVec4 color) {
 }
 
 void Layer::render() {
-    //if (!m_is_visible) return;
-
-    ////// Step 2: Commit tile (0,0)
-    //glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-    //glTexPageCommitmentARB(
-    //    GL_TEXTURE_2D,
-    //    0,                  // mip level
-    //    0, 0, 0,            // x, y, z offset (in texels)
-    //    m_tile_width, m_tile_height, 1,  // width, height, depth
-    //    GL_TRUE             // commit (not decommit)
-    //);
-
-    ////// Step 3: Upload a solid red tile
-    //std::vector<GLubyte> green_tile(m_tile_width * m_tile_height * 4, 255);
-    //for (size_t i = 0; i < green_tile.size(); i += 4) {
-    //    green_tile[i + 0] = 0; // R
-    //    green_tile[i + 1] = 255;   // G
-    //    green_tile[i + 2] = 0;   // B
-    //    green_tile[i + 3] = 255; // A
-    //}
-
-    //glTexSubImage2D(
-    //    GL_TEXTURE_2D,
-    //    0,                      // mip level
-    //    0, 0,                   // x, y offset
-    //    m_tile_width, m_tile_height,
-    //    GL_RGBA8, GL_UNSIGNED_BYTE,
-    //    green_tile.data()
-    //);
-
+    
+    // OpenGL requires a VAO to be bound in order for the call not
+    // to be discarded. We attach a dummy one, even though the
+    // vertex data is hardcoded into the vertex shader. 
+    static GLuint dummy_vao = 0;
+    if (dummy_vao == 0) {
+        glGenVertexArrays(1, &dummy_vao);
+    }
 
     m_shaders.use();
+    
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+    GLint loc = glGetUniformLocation(m_shaders.id(), "u_texture");
+    glUniform1i(loc, 0);
 
+    glBindVertexArray(dummy_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
