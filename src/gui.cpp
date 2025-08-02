@@ -10,6 +10,7 @@
 
 #include "canvas.h"
 #include "gui.h"
+#include "layer.h"
 
 GUI::GUI(GLFWwindow* window) {
     IMGUI_CHECKVERSION();
@@ -19,7 +20,7 @@ GUI::GUI(GLFWwindow* window) {
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);     
-    ImGui_ImplOpenGL3_Init();
+    ImGui_ImplOpenGL3_Init("#version 430 core");
 }
 
 GUI::~GUI() {
@@ -68,10 +69,8 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
 
     m_canvas_window_pos = ImGui::GetCursorScreenPos();
 
-    // TODO: When panning/zoom/rotation is added, have a smarter algorithm 
-    // for working out how to position the canvas on screen. 
     ImGui::Image(
-        (ImTextureID)canvas.get_gpu_texture(),
+        (ImTextureID)canvas.output_texture(),
         ImVec2(800, 800)
     );
     ImGui::End();
@@ -97,20 +96,19 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
     ImGui::BeginChild("LayerList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
     for (auto& layer : std::views::reverse(canvas.get_layers())) {
 
-
-        bool visible = canvas.get_layer_visibility(layer.id);
-        std::string checkbox_label = std::format("##layer_visible_checkbox{}", layer.id);
+        bool visible = layer.is_visible();
+        std::string checkbox_label = std::format("##layer_visible_checkbox{}", layer.id());
         if (ImGui::Checkbox(checkbox_label.c_str(), &visible)) {
-            canvas.set_layer_visibility(layer.id, visible);
+            canvas.set_layer_visibility(layer.id(), visible);
         }
 
         ImGui::SameLine();
 
         bool is_selected = user_state.selected_layer.has_value() ?
-            layer.id == user_state.selected_layer.value() :
+            layer.id() == user_state.selected_layer.value() :
             false;
-        if (ImGui::Selectable(layer.name.c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-            user_state.selected_layer = layer.id;
+        if (ImGui::Selectable(layer.name().c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+            user_state.selected_layer = layer.id();
         }
 
     }

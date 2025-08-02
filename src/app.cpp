@@ -88,6 +88,9 @@ DebugState App::generate_debug_state() {
 }
 
 void App::render() {
+    m_canvas.render_output_image();
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
@@ -97,7 +100,4 @@ void App::render() {
         m_last_update_time = glfwGetTime();
     }
 }
-
-
-
 
