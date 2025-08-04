@@ -1,6 +1,6 @@
+#include <chrono>
 #include <format>
 #include <stdexcept>
-#include <vector>
 
 #include "glad/glad.h"
 
@@ -9,6 +9,28 @@
 
 const GLenum Layer::texture_format = GL_RGBA8;
 const GLint Layer::num_mip_levels = 1;
+
+static GLuint generate_gpu_texture(size_t width, size_t height, GLint num_mip_levels, GLenum texture_format) {
+    GLuint texture_id = 0;
+    glGenTextures(1, &texture_id);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
+    glTexParameteri(GL_TEXTURE_2D, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, 0);
+
+    glTexStorage2D(GL_TEXTURE_2D, num_mip_levels, texture_format, width, height);
+    return texture_id;
+}
+
+static void attach_gpu_texture_to_shader(GLuint gpu_texture, ShaderProgram shaders) {
+    shaders.use();
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, gpu_texture);
+
+    GLint loc = glGetUniformLocation(shaders.id(), "u_texture");
+    glUniform1i(loc, 0);
+}
 
 Layer::Layer(size_t width, size_t height)
     // TODO: Find a more robust way to find these files. 
@@ -29,16 +51,12 @@ Layer::Layer(size_t width, size_t height)
         throw std::runtime_error("GL_ARB_sparse_texture not supported");
     }
 
-    glGenTextures(1, &m_gpu_texture);
-    glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
-    glTexParameteri(GL_TEXTURE_2D, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, 0);
-
-    glTexStorage2D(GL_TEXTURE_2D, num_mip_levels, texture_format, m_width, m_height);
+    m_gpu_texture = generate_gpu_texture(width, height, num_mip_levels, texture_format);
 
     glGetInternalformativ(GL_TEXTURE_2D, texture_format, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &m_tile_width);
     glGetInternalformativ(GL_TEXTURE_2D, texture_format, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &m_tile_height);
+    
+    attach_gpu_texture_to_shader(m_gpu_texture, m_shaders);
 }
 
 Layer::~Layer() {
@@ -139,7 +157,8 @@ void Layer::write_pixel(size_t x, size_t y, ImVec4 color) {
 }
 
 void Layer::render() {
-    
+    if (!m_is_visible) return;
+
     // OpenGL requires a VAO to be bound in order for the call not
     // to be discarded. We attach a dummy one, even though the
     // vertex data is hardcoded into the vertex shader. 
@@ -149,11 +168,6 @@ void Layer::render() {
     }
 
     m_shaders.use();
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-    GLint loc = glGetUniformLocation(m_shaders.id(), "u_texture");
-    glUniform1i(loc, 0);
 
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
