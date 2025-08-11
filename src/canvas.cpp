@@ -128,6 +128,28 @@ void Canvas::draw_circle_at_pos(ImVec2 mouse_pos) {
     // TODO: Add code to deallocate tiles within the Layer class.
 }
 
+void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments=8) {
+    if (!m_user_state.selected_layer.has_value()) return;
+
+    Layer::Id layer_id = m_user_state.selected_layer.value();
+    auto layer_opt = lookup_layer(layer_id);
+    if (!layer_opt.has_value()) return;
+    Layer& layer = layer_opt.value().get();
+
+    float radius = std::min(m_user_state.radius, MAX_BRUSH_RADIUS);
+    
+    unsigned int start_index = draw_start ? 0 : 1;
+    for (unsigned int i = start_index; i <= num_segments; i++) {
+        float alpha = (float) i / num_segments;
+        ImVec2 pos = ImVec2(
+            start.x * alpha + end.x * (1.0 - alpha),
+            start.y * alpha + end.y * (1.0 - alpha)
+        );
+
+        layer.draw_circle(pos, m_user_state.color, radius);
+    }
+}
+
 // Combines all the layers together in a single framebuffer.
 void Canvas::render_output_image() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);

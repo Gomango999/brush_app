@@ -64,7 +64,17 @@ void App::handle_inputs() {
 
     if (glfwGetMouseButton(m_window.window(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
         ImVec2 pos = get_mouse_position_on_canvas();
-        m_canvas.draw_circle_at_pos(pos);
+
+        if (!m_was_left_click_pressed_last_frame) {
+            m_canvas.draw_circle_at_pos(pos);
+        } else {
+            m_canvas.draw_circles_on_segment(m_prev_mouse_pos, pos, false, 8);
+        }
+
+        m_prev_mouse_pos = pos;
+        m_was_left_click_pressed_last_frame = true;
+    } else {
+        m_was_left_click_pressed_last_frame = false;
     }
 }
 
