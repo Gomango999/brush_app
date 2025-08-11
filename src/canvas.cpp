@@ -12,7 +12,7 @@
 #include "layer.h"
 
 const size_t N_CHANNELS = 4;
-const unsigned int MAX_BRUSH_RADIUS = 1000;
+const float MAX_BRUSH_RADIUS = 1000.0;
 
 Canvas::Canvas(size_t width, size_t height) {
     m_width = width;
@@ -116,49 +116,16 @@ void Canvas::set_layer_visibility(Layer::Id layer_id, bool is_visible) {
 void Canvas::draw_circle_at_pos(ImVec2 mouse_pos) {
     if (!m_user_state.selected_layer.has_value()) return;
 
-    draw_circle_in_layer(
-        int(mouse_pos.x),
-        int(mouse_pos.y),
-        m_user_state.radius,
-        m_user_state.selected_layer.value(),
-        m_user_state.color
-    );
-
-    // TODO: Add code to deallocate tiles within the Layer class.
-}
-
-void Canvas::draw_circle_in_layer(
-    int center_x,
-    int center_y,
-    unsigned int radius,
-    Layer::Id layer_id,
-    ImVec4 color
-) {
-    radius = std::min(radius, MAX_BRUSH_RADIUS);
-    unsigned int circle_radius_squared = radius * radius;
-
-    auto clamp = [](int x, int minimum, int maximum) {
-        return std::max(minimum, std::min(x, maximum));
-        };
-
-    size_t y_start = clamp(center_y - int(radius), 0, m_height);
-    size_t y_end = clamp(center_y + int(radius) + 1, 0, m_height);
-    size_t x_start = clamp(center_x - int(radius), 0, m_width);
-    size_t x_end = clamp(center_x + int(radius) + 1, 0, m_width);
-
+    Layer::Id layer_id = m_user_state.selected_layer.value();
     auto layer_opt = lookup_layer(layer_id);
     if (!layer_opt.has_value()) return;
     Layer& layer = layer_opt.value().get();
 
-    for (int y = y_start; y < y_end; y++) {
-        for (int x = x_start; x < x_end; x++) {
-            bool should_be_filled = (center_x - x) * (center_x - x)
-                + (center_y - y) * (center_y - y) <= circle_radius_squared;
-            if (should_be_filled) {
-                layer.write_pixel(x, y, color);
-            }
-        }
-    }
+    float radius = std::min(m_user_state.radius, MAX_BRUSH_RADIUS);
+
+    layer.draw_circle(mouse_pos, m_user_state.color, radius);
+
+    // TODO: Add code to deallocate tiles within the Layer class.
 }
 
 // Combines all the layers together in a single framebuffer.
@@ -168,14 +135,12 @@ void Canvas::render_output_image() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //glClearColor(m_base_color.x, m_base_color.y, m_base_color.z, 1.0);
-    glClearColor(1.0, 0.0, 0.0, 1.0);
+    glClearColor(m_base_color.x, m_base_color.y, m_base_color.z, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     for (Layer& layer : m_layers) {
         layer.render();
     }
-
 
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.

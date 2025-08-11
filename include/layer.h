@@ -25,15 +25,17 @@ private:
     size_t m_width, m_height;
     GLint m_tile_width, m_tile_height;
     GLuint m_gpu_texture;
-    ShaderProgram m_shaders;
+    GLuint m_fbo;
+
+    ShaderProgram m_quad_program;
+    ShaderProgram m_round_brush_program;
+    void set_round_brush_program_uniforms(ImVec2 pos, ImVec4 color, float radius);
 
     TileCoords calculate_tile_coords_from_pixel_coords(size_t x, size_t y);
     void commitTile(TileCoords coords, bool commit);
     void allocateTile(TileCoords coords);
+    void allocateAllTiles();
     void freeTile(TileCoords coords);
-
-    void unpack_imvec4_color(ImVec4 color, GLubyte out[4]);
-    void write_pixel_on_allocated_tile(size_t x, size_t y, ImVec4 color);
 
 public:
     Layer(size_t width, size_t height);
@@ -43,7 +45,7 @@ public:
     Layer(Layer&& other) noexcept;
     Layer& operator=(Layer&& other) noexcept;
 
-    void write_pixel(size_t x, size_t y, ImVec4 color);
+    void draw_circle(ImVec2 pos, ImVec4 color, float radius);
     void render();
 
     Id id() const { return m_id; }

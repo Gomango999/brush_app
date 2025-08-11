@@ -35,6 +35,7 @@ ShaderProgram::ShaderProgram(const std::string& vertex_path, const std::string& 
 ShaderProgram::~ShaderProgram() {
     if (m_program_id != 0) {
         glDeleteProgram(m_program_id);
+        m_program_id = 0;
     }
 }
 

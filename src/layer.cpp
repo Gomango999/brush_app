@@ -22,19 +22,35 @@ static GLuint generate_gpu_texture(size_t width, size_t height, GLint num_mip_le
     return texture_id;
 }
 
-static void attach_gpu_texture_to_shader(GLuint gpu_texture, ShaderProgram shaders) {
+static void attach_gpu_texture_to_shader(GLuint gpu_texture, ShaderProgram& shaders) {
     shaders.use();
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gpu_texture);
 
-    GLint loc = glGetUniformLocation(shaders.id(), "u_texture");
-    glUniform1i(loc, 0);
+    GLint loc_texture = glGetUniformLocation(shaders.id(), "u_texture");
+    glUniform1i(loc_texture, 0);
+
+}
+
+static GLuint generate_fbo(GLuint texture_id) {
+    GLuint fbo_id = 0;
+    glGenFramebuffers(1, &fbo_id);
+    glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        throw std::runtime_error("Framebuffer incomplete: status = " + std::to_string(status));
+    }
+
+    return fbo_id;
 }
 
 Layer::Layer(size_t width, size_t height)
     // TODO: Find a more robust way to find these files. 
-    : m_shaders("../src/shaders/quad_vert.glsl", "../src/shaders/quad_frag.glsl"),
+    : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
+    m_round_brush_program("../src/shaders/quad.vert", "../src/shaders/draw_circle.frag"),
     m_width(width),
     m_height(height)
 {
@@ -52,11 +68,15 @@ Layer::Layer(size_t width, size_t height)
     }
 
     m_gpu_texture = generate_gpu_texture(width, height, num_mip_levels, texture_format);
+    m_fbo = generate_fbo(m_gpu_texture);
 
     glGetInternalformativ(GL_TEXTURE_2D, texture_format, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &m_tile_width);
     glGetInternalformativ(GL_TEXTURE_2D, texture_format, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &m_tile_height);
-    
-    attach_gpu_texture_to_shader(m_gpu_texture, m_shaders);
+
+    allocateAllTiles();
+
+    attach_gpu_texture_to_shader(m_gpu_texture, m_quad_program);
+    attach_gpu_texture_to_shader(m_gpu_texture, m_round_brush_program);
 }
 
 Layer::~Layer() {
@@ -67,6 +87,7 @@ Layer::~Layer() {
 
 Layer::Layer(Layer&& other) noexcept
     : m_gpu_texture(other.m_gpu_texture),
+    m_fbo(other.m_fbo),
     m_width(other.m_width),
     m_height(other.m_height),
     m_tile_width(other.m_tile_width),
@@ -74,14 +95,17 @@ Layer::Layer(Layer&& other) noexcept
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
-    m_shaders("../src/shaders/quad_vert.glsl", "../src/shaders/quad_frag.glsl")
+    m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
+    m_round_brush_program("../src/shaders/quad.vert", "../src/shaders/draw_circle.frag")
 {
     other.m_gpu_texture = 0;  
+    other.m_fbo = 0;  
 }
 
 Layer& Layer::operator=(Layer&& other) noexcept {
     if (this != &other) {
         m_gpu_texture = other.m_gpu_texture;
+        m_fbo = other.m_fbo;
         m_width = other.m_width;
         m_height = other.m_height;
         m_tile_width = other.m_tile_width;
@@ -89,8 +113,10 @@ Layer& Layer::operator=(Layer&& other) noexcept {
         m_id = other.m_id;
         m_name = std::move(other.m_name);
         m_is_visible = other.m_is_visible;
+        m_quad_program = other.m_quad_program;
 
         other.m_gpu_texture = 0; // prevent double delete
+        other.m_fbo = 0; 
     }
     return *this;
 }
@@ -117,43 +143,58 @@ void Layer::allocateTile(TileCoords coords) {
     commitTile(coords, true);
 }
 
+void Layer::allocateAllTiles() {
+    int num_pages_x = (m_width + m_tile_width - 1) / m_tile_width;
+    int num_pages_y = (m_height + m_tile_height - 1) / m_tile_height;
+
+    for (size_t x = 0; x < num_pages_x; x++) {
+        for (size_t y = 0; y < num_pages_y; y++) {
+            allocateTile(TileCoords{ x, y });
+        }
+    }
+}
+
 void Layer::freeTile(TileCoords coords) {
     commitTile(coords, false);
 }
 
-void Layer::unpack_imvec4_color(ImVec4 color, GLubyte out[4]) {
-    ImU32 packed = (ImU32)(ImColor)color;
+// TODO: Move this functionality inside the ShaderProgram class
+void Layer::set_round_brush_program_uniforms(ImVec2 pos, ImVec4 color, float radius) {
+    m_round_brush_program.use();
 
-    out[0] = (packed >> IM_COL32_R_SHIFT) & 0xFF;
-    out[1] = (packed >> IM_COL32_G_SHIFT) & 0xFF;
-    out[2] = (packed >> IM_COL32_B_SHIFT) & 0xFF;
-    out[3] = (packed >> IM_COL32_A_SHIFT) & 0xFF;
-}
-
-void Layer::write_pixel_on_allocated_tile(size_t x, size_t y, ImVec4 color) {
-    GLubyte pixel_color[4];
-    unpack_imvec4_color(color, pixel_color);
-
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-    glTexSubImage2D(
-        GL_TEXTURE_2D,
-        0,
-        x, y,
-        1, 1,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        pixel_color
-    );
+    GLuint loc_texture = glGetUniformLocation(m_round_brush_program.id(), "u_texture");
+    glUniform1i(loc_texture, 0);
+
+    GLuint loc_tex_dim = glGetUniformLocation(m_round_brush_program.id(), "u_tex_dim");
+    glUniform2f(loc_tex_dim, m_width, m_height);
+
+    GLuint loc_circle_pos = glGetUniformLocation(m_round_brush_program.id(), "u_circle_pos");
+    glUniform2f(loc_circle_pos, pos.x, pos.y);
+
+    GLuint loc_radius = glGetUniformLocation(m_round_brush_program.id(), "u_radius");
+    glUniform1f(loc_radius, radius);
+
+    GLuint loc_color = glGetUniformLocation(m_round_brush_program.id(), "u_color");
+    glUniform4f(loc_color, color.x, color.y, color.z, color.w);
 }
 
-void Layer::write_pixel(size_t x, size_t y, ImVec4 color) {
-    TileCoords tile_coords = calculate_tile_coords_from_pixel_coords(x, y);
-    allocateTile(tile_coords);
-    write_pixel_on_allocated_tile(x, y, color);
+void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+    glViewport(0, 0, m_width, m_height);
 
-    // TODO: In future, we'll need to deallocate tiles.
-    // Running a compute shader at the end of a brush stroke, then
-    // deallocating the necessary tiles seems like a good strategy.
+    m_round_brush_program.use();
+    set_round_brush_program_uniforms(pos, color, radius);
+
+    // TODO: Make this a class variable
+    static GLuint dummy_vao = 0;
+    if (dummy_vao == 0) {
+        glGenVertexArrays(1, &dummy_vao);
+    }
+
+    glBindVertexArray(dummy_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
 }
 
 void Layer::render() {
@@ -167,7 +208,8 @@ void Layer::render() {
         glGenVertexArrays(1, &dummy_vao);
     }
 
-    m_shaders.use();
+    m_quad_program.use();
+    attach_gpu_texture_to_shader(m_gpu_texture, m_quad_program);
 
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
