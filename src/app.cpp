@@ -1,3 +1,5 @@
+#include <chrono>
+#include <thread>
 
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
@@ -44,6 +46,12 @@ void App::run() {
         render();
 
         m_last_dt = glfwGetTime() - loop_start_time;
+        double time_to_wait = m_target_dt - m_last_dt;
+        if (time_to_wait > 0.0) {
+            std::this_thread::sleep_for(
+                std::chrono::duration<double>(time_to_wait)
+            );
+        }
     }
 }
 
@@ -94,10 +102,6 @@ void App::render() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-    if (glfwGetTime() - m_last_update_time >= (1.0 / 60.0)) {
-        glfwSwapBuffers(m_window.window());
-
-        m_last_update_time = glfwGetTime();
-    }
+    glfwSwapBuffers(m_window.window());
 }
 

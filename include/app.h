@@ -19,6 +19,8 @@ private:
 
     double m_last_update_time;
     double m_last_dt;
+    const double m_target_fps = 10000.0;
+    const double m_target_dt = 1.0 / m_target_fps;
 
 public:
     App(
