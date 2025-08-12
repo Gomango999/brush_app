@@ -170,6 +170,17 @@ void Layer::set_round_brush_program_uniforms(ImVec2 pos, ImVec4 color, float rad
     m_round_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
 }
 
+GLuint Layer::get_dummy_vao() const {
+    // OpenGL requires a VAO to be bound in order for the call not
+    // to be discarded. We attach a dummy one, even though the
+    // vertex data is hardcoded into the vertex shader. 
+    static GLuint dummy_vao = 0;
+    if (dummy_vao == 0) {
+        glGenVertexArrays(1, &dummy_vao);
+    }
+    return dummy_vao;
+}
+
 void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
@@ -178,11 +189,7 @@ void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
     set_round_brush_program_uniforms(pos, color, radius);
 
     // TODO: Make this a class variable
-    static GLuint dummy_vao = 0;
-    if (dummy_vao == 0) {
-        glGenVertexArrays(1, &dummy_vao);
-    }
-
+    GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
 }
@@ -190,16 +197,9 @@ void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
 void Layer::render() {
     if (!m_is_visible) return;
 
-    // OpenGL requires a VAO to be bound in order for the call not
-    // to be discarded. We attach a dummy one, even though the
-    // vertex data is hardcoded into the vertex shader. 
-    static GLuint dummy_vao = 0;
-    if (dummy_vao == 0) {
-        glGenVertexArrays(1, &dummy_vao);
-    }
-
     m_quad_program.use();
 
+    GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

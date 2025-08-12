@@ -37,6 +37,8 @@ private:
     void allocateAllTiles();
     void freeTile(TileCoords coords);
 
+    GLuint get_dummy_vao() const;
+
 public:
     Layer(size_t width, size_t height);
     ~Layer();
