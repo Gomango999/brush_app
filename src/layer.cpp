@@ -1,8 +1,10 @@
-#include <chrono>
 #include <format>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 #include "glad/glad.h"
+#include "imgui.h"
 
 #include "layer.h"
 #include "program.h"
@@ -22,14 +24,12 @@ static GLuint generate_gpu_texture(size_t width, size_t height, GLint num_mip_le
     return texture_id;
 }
 
-static void attach_gpu_texture_to_shader(GLuint gpu_texture, ShaderProgram& shaders) {
-    shaders.use();
+static void attach_gpu_texture_to_program(GLuint gpu_texture, Program& program) {
+    program.use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, gpu_texture);
 
-    GLint loc_texture = glGetUniformLocation(shaders.id(), "u_texture");
-    glUniform1i(loc_texture, 0);
-
+    program.set_uniform_1i("u_texture", 0);
 }
 
 static GLuint generate_fbo(GLuint texture_id) {
@@ -75,8 +75,8 @@ Layer::Layer(size_t width, size_t height)
 
     allocateAllTiles();
 
-    attach_gpu_texture_to_shader(m_gpu_texture, m_quad_program);
-    attach_gpu_texture_to_shader(m_gpu_texture, m_round_brush_program);
+    attach_gpu_texture_to_program(m_gpu_texture, m_quad_program);
+    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
 }
 
 Layer::~Layer() {
@@ -95,8 +95,8 @@ Layer::Layer(Layer&& other) noexcept
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
-    m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
-    m_round_brush_program("../src/shaders/quad.vert", "../src/shaders/draw_circle.frag")
+    m_quad_program(std::move(other.m_quad_program)),
+    m_round_brush_program(std::move(other.m_round_brush_program))
 {
     other.m_gpu_texture = 0;  
     other.m_fbo = 0;  
@@ -115,7 +115,7 @@ Layer& Layer::operator=(Layer&& other) noexcept {
         m_is_visible = other.m_is_visible;
         m_quad_program = other.m_quad_program;
 
-        other.m_gpu_texture = 0; // prevent double delete
+        other.m_gpu_texture = 0; 
         other.m_fbo = 0; 
     }
     return *this;
@@ -162,22 +162,12 @@ void Layer::freeTile(TileCoords coords) {
 void Layer::set_round_brush_program_uniforms(ImVec2 pos, ImVec4 color, float radius) {
     m_round_brush_program.use();
 
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-    GLuint loc_texture = glGetUniformLocation(m_round_brush_program.id(), "u_texture");
-    glUniform1i(loc_texture, 0);
+    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
 
-    GLuint loc_tex_dim = glGetUniformLocation(m_round_brush_program.id(), "u_tex_dim");
-    glUniform2f(loc_tex_dim, m_width, m_height);
-
-    GLuint loc_circle_pos = glGetUniformLocation(m_round_brush_program.id(), "u_circle_pos");
-    glUniform2f(loc_circle_pos, pos.x, pos.y);
-
-    GLuint loc_radius = glGetUniformLocation(m_round_brush_program.id(), "u_radius");
-    glUniform1f(loc_radius, radius);
-
-    GLuint loc_color = glGetUniformLocation(m_round_brush_program.id(), "u_color");
-    glUniform4f(loc_color, color.x, color.y, color.z, color.w);
+    m_round_brush_program.set_uniform_2f("u_tex_dim", m_width, m_height);
+    m_round_brush_program.set_uniform_2f("u_circle_pos", pos.x, pos.y);
+    m_round_brush_program.set_uniform_1f("u_radius", radius);
+    m_round_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
 }
 
 void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
@@ -209,7 +199,6 @@ void Layer::render() {
     }
 
     m_quad_program.use();
-    attach_gpu_texture_to_shader(m_gpu_texture, m_quad_program);
 
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

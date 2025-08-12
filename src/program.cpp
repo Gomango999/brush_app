@@ -8,7 +8,7 @@
 #include "program.h"
 
 
-ShaderProgram::ShaderProgram(const std::string& vertex_path, const std::string& fragment_path) {
+Program::Program(const std::string& vertex_path, const std::string& fragment_path) {
     std::string vertex_code = load_shader_source(vertex_path);
     std::string fragment_code = load_shader_source(fragment_path);
 
@@ -32,22 +32,70 @@ ShaderProgram::ShaderProgram(const std::string& vertex_path, const std::string& 
     glDeleteShader(fragment_shader);
 }
 
-ShaderProgram::~ShaderProgram() {
+Program::~Program() {
     if (m_program_id != 0) {
         glDeleteProgram(m_program_id);
         m_program_id = 0;
     }
 }
 
-void ShaderProgram::use() const {
+Program::Program(Program&& other) noexcept
+    : m_program_id(other.m_program_id) {
+    other.m_program_id = 0; 
+}
+
+// Move assignment
+Program& Program::operator=(Program&& other) noexcept {
+    if (this != &other) {
+        if (m_program_id != 0) {
+            glDeleteProgram(m_program_id);
+        }
+
+        m_program_id = other.m_program_id;
+        other.m_program_id = 0; 
+    }
+    return *this;
+}
+
+void Program::use() const {
     glUseProgram(m_program_id);
 }
 
-GLuint ShaderProgram::id() const {
+GLuint Program::id() const {
     return m_program_id;
 }
 
-std::string ShaderProgram::load_shader_source(const std::string& path) {
+GLint Program::get_uniform_location(const char* name) {
+    return glGetUniformLocation(m_program_id, name);
+}
+
+void Program::set_uniform_1i(const char* name, int i) {
+    const GLint loc = get_uniform_location(name);
+    glUniform1i(loc, i);
+}
+
+void Program::set_uniform_1f(const char* name, float f) {
+    const GLint loc = get_uniform_location(name);
+    glUniform1f(loc, f);
+}
+
+void Program::set_uniform_2f(const char* name, float f1, float f2) {
+    const GLint loc = get_uniform_location(name);
+    glUniform2f(loc, f1, f2);
+}
+
+void Program::set_uniform_3f(const char* name, float f1, float f2, float f3) {
+    const GLint loc = get_uniform_location(name);
+    glUniform3f(loc, f1, f2, f3);
+}
+
+void Program::set_uniform_4f(const char* name, float f1, float f2, float f3, float f4) {
+    const GLint loc = get_uniform_location(name);
+    glUniform4f(loc, f1, f2, f3, f4);
+}
+
+
+std::string Program::load_shader_source(const std::string& path) {
     std::ifstream file(path);
     if (!file) {
         throw std::runtime_error("Failed to open shader file: " + path);
@@ -58,7 +106,7 @@ std::string ShaderProgram::load_shader_source(const std::string& path) {
     return buffer.str();
 }
 
-GLuint ShaderProgram::compile_shader(const std::string& source, GLenum shader_type) {
+GLuint Program::compile_shader(const std::string& source, GLenum shader_type) {
     GLuint shader = glCreateShader(shader_type);
     const char* src_ptr = source.c_str();
     glShaderSource(shader, 1, &src_ptr, nullptr);

@@ -27,8 +27,8 @@ private:
     GLuint m_gpu_texture;
     GLuint m_fbo;
 
-    ShaderProgram m_quad_program;
-    ShaderProgram m_round_brush_program;
+    Program m_quad_program;
+    Program m_round_brush_program;
     void set_round_brush_program_uniforms(ImVec2 pos, ImVec4 color, float radius);
 
     TileCoords calculate_tile_coords_from_pixel_coords(size_t x, size_t y);
