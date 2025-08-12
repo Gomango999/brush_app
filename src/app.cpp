@@ -80,9 +80,7 @@ void App::handle_inputs() {
 
 ImVec2 App::get_mouse_position_on_canvas() {
     double mouse_x, mouse_y;
-    // TODO: This function feels like it doesn't belong in app.cpp
-    // Maybe in m_window.cpp?
-    glfwGetCursorPos(m_window.window(), &mouse_x, &mouse_y);
+    m_window.get_cursor_pos(&mouse_x, &mouse_y);
 
     ImVec2 pos_on_canvas_window = 
         m_gui.get_mouse_position_on_canvas_window(mouse_x, mouse_y);

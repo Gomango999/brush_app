@@ -49,3 +49,7 @@ GLFWwindow* Window::window() {
 bool Window::should_close() {
     return glfwWindowShouldClose(m_window);
 }
+
+void Window::get_cursor_pos(double* mouse_x, double* mouse_y) {
+    glfwGetCursorPos(m_window, mouse_x, mouse_y);
+}
