@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 
 #include "imgui.h"
 
@@ -22,8 +23,7 @@ private:
     const double m_target_fps = 10000.0;
     const double m_target_dt = 1.0 / m_target_fps;
 
-    ImVec2 m_prev_mouse_pos;
-    bool m_was_left_click_pressed_last_frame;
+    std::optional<ImVec2> m_prev_mouse_pos;
 
 public:
     App(

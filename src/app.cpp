@@ -1,4 +1,5 @@
 #include <chrono>
+#include <optional>
 #include <thread>
 
 #include "glad.h"
@@ -28,7 +29,7 @@ App::App(
 {
     m_last_dt = 0.0;
     m_last_update_time = 0.0;
-    m_was_left_click_pressed_last_frame = false;
+    m_prev_mouse_pos = std::nullopt;
 
     Layer::Id new_layer_id = m_canvas.insert_new_layer_above_selected();
     m_canvas.user_state().selected_layer = new_layer_id;
@@ -70,16 +71,15 @@ void App::handle_inputs() {
     if (ImGui::IsMouseDown(0)) {
         ImVec2 pos = get_mouse_position_on_canvas();
 
-        if (!m_was_left_click_pressed_last_frame) {
+        if (!m_prev_mouse_pos.has_value()) {
             m_canvas.draw_circle_at_pos(pos);
         } else {
-            m_canvas.draw_circles_on_segment(m_prev_mouse_pos, pos, false, 8);
+            m_canvas.draw_circles_on_segment(m_prev_mouse_pos.value(), pos, false, 8);
         }
 
         m_prev_mouse_pos = pos;
-        m_was_left_click_pressed_last_frame = true;
     } else {
-        m_was_left_click_pressed_last_frame = false;
+        m_prev_mouse_pos = std::nullopt;
     }
 }
 
