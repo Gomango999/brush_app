@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <format>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 
 #include "imgui.h"
