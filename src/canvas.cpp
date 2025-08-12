@@ -181,7 +181,7 @@ UserState& Canvas::user_state() {
     return m_user_state;
 }
 
-const std::vector<Layer>& Canvas::get_layers() {
+const std::vector<Layer>& Canvas::get_layers() const {
     return m_layers;
 }
 

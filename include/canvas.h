@@ -56,7 +56,7 @@ public:
 	size_t width() const;
 	size_t height() const;
 	UserState& user_state();
-	const std::vector<Layer>& get_layers();
+	const std::vector<Layer>& get_layers() const;
 	GLuint output_texture() const;
 
 private:

@@ -187,7 +187,6 @@ void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
     m_round_brush_program.use();
     set_round_brush_program_uniforms(pos, color, radius);
 
-    // TODO: Make this a class variable
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 

@@ -1,12 +1,14 @@
 #include <chrono>
 #include <thread>
 
+#include "glad.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 
 #include "app.h"
 #include "canvas.h"
 #include "gui.h"
+#include "layer.h"
 
 App::App(
     unsigned int screen_width,
@@ -26,6 +28,7 @@ App::App(
 {
     m_last_dt = 0.0;
     m_last_update_time = 0.0;
+    m_was_left_click_pressed_last_frame = false;
 
     Layer::Id new_layer_id = m_canvas.insert_new_layer_above_selected();
     m_canvas.user_state().selected_layer = new_layer_id;
