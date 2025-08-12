@@ -16,7 +16,7 @@
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
 
-Canvas::Canvas(size_t width, size_t height) {
+Canvas::Canvas(size_t width, size_t height): m_user_state() {
     m_width = width;
     m_height = height;
 
@@ -43,8 +43,6 @@ Canvas::Canvas(size_t width, size_t height) {
     }
 
     m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
-
-    m_user_state = UserState();
 }
 
 Canvas::~Canvas() {
@@ -230,4 +228,14 @@ GLuint Canvas::output_texture() const {
     return m_output_texture;
 }
 
+void UserState::decrease_brush_size() {
+    auto it = std::lower_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), radius);
+    if (it == BRUSH_SIZES.begin()) radius = MIN_BRUSH_SIZE;
+    else radius = *prev(it);
+}
 
+void UserState::increase_brush_size() {
+    auto it = std::upper_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), radius);
+    if (it == BRUSH_SIZES.begin()) radius = MAX_BRUSH_SIZE;
+    else radius = *it;
+}

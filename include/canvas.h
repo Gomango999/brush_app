@@ -11,6 +11,10 @@
 #include "program.h"
 
 struct UserState {
+	const float MIN_BRUSH_SIZE = 1.0f;
+	const float MAX_BRUSH_SIZE = 1000.0f;
+	const std::vector<float> BRUSH_SIZES{ 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8 , 9, 10, 12, 15, 17, 20, 25, 30, 40, 60, 70, 80, 100, 120, 150, 170, 200, 250, 300, 400, 500, 600, 700, 800, 1000 };
+
 	ImVec4 color;
 	float radius;
 	float opacity;
@@ -28,6 +32,9 @@ struct UserState {
 
 		mouse_pos = ImVec2(0.0, 0.0);
 	};
+
+	void increase_brush_size();
+	void decrease_brush_size();
 };
 
 // `Canvas` the canvas pixel data in both the CPU and GPU. It is

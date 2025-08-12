@@ -65,10 +65,19 @@ void App::handle_inputs() {
     ImGuiIO& io = ImGui::GetIO();
 
     ImVec2 mouse_pos = get_mouse_position_on_canvas();
-    m_canvas.user_state().mouse_pos = mouse_pos;
+    UserState& user_state = m_canvas.user_state();
+    user_state.mouse_pos = mouse_pos;
 
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         m_window.set_should_close(true);
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_1)) {
+        user_state.decrease_brush_size();
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_3)) {
+        user_state.increase_brush_size();
     }
 
     if (ImGui::IsMouseDown(0)) {
