@@ -58,6 +58,10 @@ Program& Program::operator=(Program&& other) noexcept {
 }
 
 void Program::use() const {
+    if (m_program_id == 0) {
+        throw std::runtime_error("Tried to use uninitialised program");
+    }
+
     glUseProgram(m_program_id);
 }
 

@@ -111,7 +111,8 @@ Layer& Layer::operator=(Layer&& other) noexcept {
         m_id = other.m_id;
         m_name = std::move(other.m_name);
         m_is_visible = other.m_is_visible;
-        m_quad_program = other.m_quad_program;
+        m_quad_program = std::move(other.m_quad_program);
+        m_round_brush_program = std::move(other.m_round_brush_program);
 
         other.m_gpu_texture = 0; 
         other.m_fbo = 0; 
@@ -156,18 +157,6 @@ void Layer::freeTile(TileCoords coords) {
     commitTile(coords, false);
 }
 
-// TODO: Move this functionality inside the ShaderProgram class
-void Layer::set_round_brush_program_uniforms(ImVec2 pos, ImVec4 color, float radius) {
-    m_round_brush_program.use();
-
-    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
-
-    m_round_brush_program.set_uniform_2f("u_tex_dim", m_width, m_height);
-    m_round_brush_program.set_uniform_2f("u_circle_pos", pos.x, pos.y);
-    m_round_brush_program.set_uniform_1f("u_radius", radius);
-    m_round_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
-}
-
 GLuint Layer::get_dummy_vao() const {
     // OpenGL requires a VAO to be bound in order for the call not
     // to be discarded. We attach a dummy one, even though the
@@ -184,7 +173,11 @@ void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
     glViewport(0, 0, m_width, m_height);
 
     m_round_brush_program.use();
-    set_round_brush_program_uniforms(pos, color, radius);
+    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
+    m_round_brush_program.set_uniform_2f("u_tex_dim", m_width, m_height);
+    m_round_brush_program.set_uniform_2f("u_circle_pos", pos.x, pos.y);
+    m_round_brush_program.set_uniform_1f("u_radius", radius);
+    m_round_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);

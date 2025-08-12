@@ -8,6 +8,7 @@
 
 class Program {
 public:
+    Program() = default;
     Program(const std::string& vertex_path, const std::string& fragment_path);
     ~Program();
     Program(const Program&) = default;

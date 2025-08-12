@@ -46,25 +46,9 @@ file(GLOB SHADER_FILES "src/shaders/*")
 
 source_group("Shaders" FILES ${SHADER_FILES})
 
-set(APP_SOURCES 
-    "src/main.cpp"
-    "src/app.cpp"
-    "src/canvas.cpp"
-    "src/gui.cpp"
-    "src/layer.cpp"
-    "src/program.cpp"
-    "src/window.cpp"
-)
+file(GLOB APP_SOURCES "src/*.cpp")
 
-set(HEADER_FILES
-    "include/app.h"
-    "include/bounding_box.h"
-    "include/canvas.h"
-    "include/gui.h"
-    "include/layer.h"
-    "include/program.h"
-    "include/window.h"
-)
+file(GLOB HEADER_FILES "include/*.h")
 
 add_executable(brush_app 
     ${APP_SOURCES}

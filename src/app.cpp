@@ -64,20 +64,21 @@ void App::handle_inputs() {
 
     ImGuiIO& io = ImGui::GetIO();
 
+    ImVec2 mouse_pos = get_mouse_position_on_canvas();
+    m_canvas.user_state().mouse_pos = mouse_pos;
+
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         m_window.set_should_close(true);
     }
 
     if (ImGui::IsMouseDown(0)) {
-        ImVec2 pos = get_mouse_position_on_canvas();
-
         if (!m_prev_mouse_pos.has_value()) {
-            m_canvas.draw_circle_at_pos(pos);
+            m_canvas.draw_circle_at_pos(mouse_pos);
         } else {
-            m_canvas.draw_circles_on_segment(m_prev_mouse_pos.value(), pos, false, 8);
+            m_canvas.draw_circles_on_segment(m_prev_mouse_pos.value(), mouse_pos, false, 8);
         }
 
-        m_prev_mouse_pos = pos;
+        m_prev_mouse_pos = mouse_pos;
     } else {
         m_prev_mouse_pos = std::nullopt;
     }

@@ -8,6 +8,7 @@
 #include "imgui.h"
 
 #include "layer.h"
+#include "program.h"
 
 struct UserState {
 	ImVec4 color;
@@ -16,12 +17,16 @@ struct UserState {
 
 	std::optional<Layer::Id> selected_layer;
 
+	ImVec2 mouse_pos;
+
 	UserState() {
 		color = ImVec4(0.0, 0.0, 0.0, 1.0);
 		radius = 200.0;
 		opacity = 1.0;
 
 		selected_layer = std::nullopt;
+
+		mouse_pos = ImVec2(0.0, 0.0);
 	};
 };
 
@@ -38,6 +43,11 @@ private:
 	GLuint m_output_texture;
 
 	UserState m_user_state;
+
+	Program m_cursor_program;
+
+	GLuint get_dummy_vao() const;
+	void render_cursor();
 
 public:
 	Canvas(size_t _width, size_t _height);

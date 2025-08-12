@@ -11,6 +11,7 @@
 
 #include "canvas.h"
 #include "layer.h"
+#include "program.h"
 
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
@@ -40,6 +41,8 @@ Canvas::Canvas(size_t width, size_t height) {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         throw std::exception("Could not set up framebuffer");
     }
+
+    m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
 
     m_user_state = UserState();
 }
@@ -159,6 +162,17 @@ void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, 
     }
 }
 
+GLuint Canvas::get_dummy_vao() const {
+    // OpenGL requires a VAO to be bound in order for the call not
+    // to be discarded. We attach a dummy one, even though the
+    // vertex data is hardcoded into the vertex shader. 
+    static GLuint dummy_vao = 0;
+    if (dummy_vao == 0) {
+        glGenVertexArrays(1, &dummy_vao);
+    }
+    return dummy_vao;
+}
+
 // Combines all the layers together in a single framebuffer.
 void Canvas::render_output_image() {
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
@@ -172,11 +186,29 @@ void Canvas::render_output_image() {
     for (Layer& layer : m_layers) {
         layer.render();
     }
+    
+    render_cursor();
 
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+void Canvas::render_cursor() {
+    m_cursor_program.use();
+    // TODO: Move shared code into a Texture/FBO class  
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_output_texture);
+    m_cursor_program.set_uniform_1i("u_texture", 0);
+    m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
+    m_cursor_program.set_uniform_2f("u_mouse_pos", m_user_state.mouse_pos.x, m_user_state.mouse_pos.y);
+    m_cursor_program.set_uniform_1f("u_radius", m_user_state.radius);
+
+    GLuint dummy_vao = get_dummy_vao();
+    glBindVertexArray(dummy_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
 
 size_t Canvas::width() const {
     return m_width;
