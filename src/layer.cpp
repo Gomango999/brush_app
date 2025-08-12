@@ -195,6 +195,7 @@ void Layer::render() {
     if (!m_is_visible) return;
 
     m_quad_program.use();
+    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
