@@ -64,7 +64,7 @@ void App::handle_inputs() {
     ImGuiIO& io = ImGui::GetIO();
 
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-        glfwSetWindowShouldClose(m_window.window(), true);
+        m_window.set_should_close(true);
     }
 
     if (ImGui::IsMouseDown(0)) {

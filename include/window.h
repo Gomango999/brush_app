@@ -9,6 +9,9 @@ public:
     ~Window(); 
     GLFWwindow* window();
 
+
     void get_cursor_pos(double* mouse_x, double* mouse_y);
+
+    void set_should_close(int value);
     bool should_close();
 };

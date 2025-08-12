@@ -46,6 +46,10 @@ GLFWwindow* Window::window() {
     return m_window;
 }
 
+void Window::set_should_close(int value) {
+    glfwSetWindowShouldClose(m_window, value);
+}
+
 bool Window::should_close() {
     return glfwWindowShouldClose(m_window);
 }
