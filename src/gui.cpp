@@ -51,21 +51,33 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
     
     UserState& user_state = canvas.user_state();
 
-    ImGui::Begin("Color");
+    define_color_picker_window(user_state);
+    define_brush_window(user_state);
+    define_canvas_window(canvas);
+    define_debug_window(debug_state, user_state);
+    define_error_popup();
+    define_layer_window(canvas);
+}
 
+void GUI::define_color_picker_window(UserState& user_state) {
+    ImGui::Begin("Color");
     ImGui::ColorPicker4(
-        "ColorPicker", 
+        "ColorPicker",
         (float*)&user_state.color,
         ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_Float
     );
-
     ImGui::End();
+}
 
+void GUI::define_brush_window(UserState& user_state) {
     ImGui::Begin("Brush");
     ImGui::SliderFloat("Size", &user_state.radius, 1.0f, 1000.0f, "%f");
     ImGui::SliderFloat("Opacity", &user_state.opacity, 0.0f, 1.0f);
     ImGui::End();
+}
 
+
+void GUI::define_canvas_window(Canvas& canvas) {
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
     ImGui::Begin("Canvas", nullptr, window_flags);
@@ -77,50 +89,67 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
         ImVec2(800, 800)
     );
     ImGui::End();
+}
 
+void GUI::define_debug_window(DebugState& debug_state, UserState& user_state) {
     ImGui::Begin("Debug");
     imgui_formatted_label_text("dt", "%.9f", debug_state.dt);
     imgui_formatted_label_text("fps", "%.9f", 1.0 / debug_state.dt);
     imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x), int(debug_state.mouse_pos.y));
     imgui_formatted_label_text("selected layer", "%d", user_state.selected_layer.has_value() ? user_state.selected_layer.value() : -1);
     ImGui::End();
+}
 
-
-
-    ImGui::Begin("Layers");
-
-    static bool show_alert = false;
-    static std::string alert_message;
-    if (show_alert) {
+void GUI::define_error_popup() {
+    if (m_alert_message.has_value()) {
         ImGui::OpenPopup("Error");
     }
 
-    if (ImGui::BeginPopupModal("Error", &show_alert)) {
+    if (ImGui::BeginPopupModal("Error", nullptr)) {
         ImGui::Text("Error when creating new layer:");
-        ImGui::Text(alert_message.c_str());
+        if (m_alert_message.has_value()) {
+            ImGui::Text(m_alert_message.value().c_str());
+        } else {
+            ImGui::Text("Reason Unknown");
+        }
 
         if (ImGui::Button("OK")) {
             ImGui::CloseCurrentPopup();
-            show_alert = false;
+            m_alert_message = std::nullopt;
         }
 
         ImGui::EndPopup();
+    } else {
+        m_alert_message = std::nullopt;
     }
+}
 
+void GUI::define_layer_window(Canvas& canvas)
+{
+    ImGui::Begin("Layers");
+    define_layer_buttons(canvas);
+    define_layer_list(canvas);
+    ImGui::End();
+}
+
+void GUI::define_layer_buttons(Canvas& canvas) {
     if (ImGui::Button("New")) {
         try {
+            UserState& user_state = canvas.user_state();
             Layer::Id new_layer_id = canvas.insert_new_layer_above_selected();
             user_state.selected_layer = new_layer_id;
-        } catch (const std::runtime_error& e) {
-            show_alert = true;
-            alert_message = e.what();
+        }
+        catch (const std::runtime_error& e) {
+            m_alert_message = e.what();
         }
     }
     ImGui::SameLine();
     if (ImGui::Button("Delete")) {
         canvas.delete_selected_layer();
     }
+}
 
+void GUI::define_layer_list(Canvas& canvas) {
     ImGui::BeginChild("LayerList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
     for (auto& layer : std::views::reverse(canvas.get_layers())) {
 
@@ -132,6 +161,7 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
 
         ImGui::SameLine();
 
+        UserState& user_state = canvas.user_state();
         bool is_selected = user_state.selected_layer.has_value() ?
             layer.id() == user_state.selected_layer.value() :
             false;
@@ -141,7 +171,6 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
 
     }
     ImGui::EndChild();
-    ImGui::End();
 }
 
 ImVec2 GUI::get_mouse_position_on_canvas_window(double mouse_x, double mouse_y) {
