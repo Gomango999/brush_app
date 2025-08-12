@@ -48,7 +48,6 @@ static GLuint generate_fbo(GLuint texture_id) {
 }
 
 Layer::Layer(size_t width, size_t height)
-    // TODO: Find a more robust way to find these files. 
     : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
     m_round_brush_program("../src/shaders/quad.vert", "../src/shaders/draw_circle.frag"),
     m_width(width),
