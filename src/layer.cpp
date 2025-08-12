@@ -61,7 +61,6 @@ Layer::Layer(size_t width, size_t height)
 
     m_is_visible = true;
 
-    // TODO: Handle this exception
     if (!GLAD_GL_ARB_sparse_texture) {
         throw std::runtime_error("GL_ARB_sparse_texture not supported");
     }

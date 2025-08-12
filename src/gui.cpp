@@ -86,10 +86,35 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
     ImGui::End();
 
 
+
     ImGui::Begin("Layers");
+
+    static bool show_alert = false;
+    static std::string alert_message;
+    if (show_alert) {
+        ImGui::OpenPopup("Error");
+    }
+
+    if (ImGui::BeginPopupModal("Error", &show_alert)) {
+        ImGui::Text("Error when creating new layer:");
+        ImGui::Text(alert_message.c_str());
+
+        if (ImGui::Button("OK")) {
+            ImGui::CloseCurrentPopup();
+            show_alert = false;
+        }
+
+        ImGui::EndPopup();
+    }
+
     if (ImGui::Button("New")) {
-        Layer::Id new_layer_id = canvas.insert_new_layer_above_selected();
-        user_state.selected_layer = new_layer_id;
+        try {
+            Layer::Id new_layer_id = canvas.insert_new_layer_above_selected();
+            user_state.selected_layer = new_layer_id;
+        } catch (const std::runtime_error& e) {
+            show_alert = true;
+            alert_message = e.what();
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("Delete")) {
