@@ -52,6 +52,7 @@ public:
 	void draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments);
 
 	void render_output_image();
+	void render_to_window(ImVec2 pos, ImVec2 dim, ImVec2 window_dim);
 
 	size_t width() const;
 	size_t height() const;

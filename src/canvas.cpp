@@ -169,6 +169,28 @@ void Canvas::render_output_image() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+void Canvas::render_to_window(ImVec2 pos, ImVec2 dim, ImVec2 window_dim) {
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    GLint viewport_x = pos.x;
+    GLint viewport_y = window_dim.y - (pos.y + 800);
+    glViewport(viewport_x, viewport_y, 800, 800);
+    glScissor(viewport_x, viewport_y, 800, 800);
+
+    glEnable(GL_SCISSOR_TEST);
+    glClearColor(m_base_color.x, m_base_color.y, m_base_color.z, 1.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_SCISSOR_TEST);
+
+    for (Layer& layer : m_layers) {
+        layer.render();
+    }
+}
+
+
 size_t Canvas::width() const {
     return m_width;
 }

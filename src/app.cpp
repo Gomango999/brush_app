@@ -61,11 +61,13 @@ void App::run() {
 void App::handle_inputs() {
     glfwPollEvents();
 
-    if (glfwGetKey(m_window.window(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    ImGuiIO& io = ImGui::GetIO();
+
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         glfwSetWindowShouldClose(m_window.window(), true);
     }
 
-    if (glfwGetMouseButton(m_window.window(), GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+    if (ImGui::IsMouseDown(0)) {
         ImVec2 pos = get_mouse_position_on_canvas();
 
         if (!m_was_left_click_pressed_last_frame) {

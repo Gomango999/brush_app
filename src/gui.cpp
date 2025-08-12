@@ -51,17 +51,20 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
     
     UserState& user_state = canvas.user_state();
 
-    // BUG: Program still draws on canvas while selecting a colour.
     ImGui::Begin("Color");
-    ImGuiColorEditFlags base_flags = ImGuiColorEditFlags_None;
-    ImGui::ColorEdit4("Color", (float*) &user_state.color, base_flags);
+
+    ImGui::ColorPicker4(
+        "ColorPicker", 
+        (float*)&user_state.color,
+        ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_Float
+    );
+
     ImGui::End();
 
     ImGui::Begin("Brush");
     ImGui::SliderFloat("Size", &user_state.radius, 1.0f, 1000.0f, "%f");
     ImGui::SliderFloat("Opacity", &user_state.opacity, 0.0f, 1.0f);
     ImGui::End();
-
 
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
