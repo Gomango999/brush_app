@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <exception>
 #include <functional>
+#include <iterator>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -76,13 +77,22 @@ void Canvas::delete_selected_layer() {
 
     Layer::Id target_layer_id = m_user_state.selected_layer.value();
 
-    std::erase_if(m_layers,
+    auto it = std::find_if(m_layers.begin(), m_layers.end(),
         [target_layer_id](const Layer& layer) {
             return layer.id() == target_layer_id;
         });
+    if (it == m_layers.end()) return;
 
-    // TODO: Set this to the layer below the deleted one. 
-    m_user_state.selected_layer = std::nullopt;
+    size_t index = std::distance(m_layers.begin(), it);
+    m_layers.erase(it);
+
+    if (m_layers.empty()) {
+        m_user_state.selected_layer = std::nullopt;
+    } else if (index == 0) {
+        m_user_state.selected_layer = m_layers[0].id();
+    } else {
+        m_user_state.selected_layer = m_layers[index-1].id();
+    }
 }
 
 std::optional<std::reference_wrapper<Layer>> Canvas::lookup_layer(Layer::Id layer_id) {
