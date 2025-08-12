@@ -52,7 +52,6 @@ public:
 	void draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments);
 
 	void render_output_image();
-	void render_to_window(ImVec2 pos, ImVec2 dim, ImVec2 window_dim);
 
 	size_t width() const;
 	size_t height() const;
@@ -62,13 +61,6 @@ public:
 
 private:
 	std::optional<std::reference_wrapper<Layer>> lookup_layer(Layer::Id layer_id);
-	void draw_circle_in_layer(
-		int center_x,
-		int center_y,
-		unsigned int radius,
-		Layer::Id layer,
-		ImVec4 color
-	);
 };
 
 
