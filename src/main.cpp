@@ -1,4 +1,4 @@
-#include <cstdio>
+#include <iostream>
 
 #include "app.h"
 
@@ -8,14 +8,18 @@ const unsigned int CANVAS_WIDTH = 8000;
 const unsigned int CANVAS_HEIGHT = 8000;
 
 int main() {
-
-    auto app = App(
-        SCREEN_WIDTH, SCREEN_HEIGHT, 
-        CANVAS_WIDTH, CANVAS_HEIGHT
-    );
-
-    app.run();
     
+    try {
+        auto app = App(
+            SCREEN_WIDTH, SCREEN_HEIGHT, 
+            CANVAS_WIDTH, CANVAS_HEIGHT
+        );
+
+        app.run();
+    } catch (const std::runtime_error& e) {
+        std::cerr << "Brush App failed for the following reason: " << e.what() << std::endl;
+    }
+
     return 0;
 }
 
