@@ -1,40 +1,33 @@
 #pragma once
 
 #include <functional>
+#include <memory>
 #include <optional>
 #include <vector>
 
 #include <glad/glad.h>
 #include "imgui.h"
 
+#include "brush.h"
 #include "layer.h"
 #include "program.h"
 
+
+// TODO: Should this really be stored as part of the canvas?
+// I suspect it's an app thing that should get passed around.
 struct UserState {
-	const float MIN_BRUSH_SIZE = 1.0f;
-	const float MAX_BRUSH_SIZE = 1000.0f;
-	const std::vector<float> BRUSH_SIZES{ 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8 , 9, 10, 12, 15, 17, 20, 25, 30, 40, 60, 70, 80, 100, 120, 150, 170, 200, 250, 300, 400, 500, 600, 700, 800, 1000 };
 
-	ImVec4 color;
-	float radius;
-	float opacity;
-
+	BrushManager brush_manager;
 	std::optional<Layer::Id> selected_layer;
+	ImVec4 color;
 
 	ImVec2 mouse_pos;
 
-	UserState() {
+	UserState() : brush_manager() {
 		color = ImVec4(0.0, 0.0, 0.0, 1.0);
-		radius = 200.0;
-		opacity = 1.0;
-
 		selected_layer = std::nullopt;
-
 		mouse_pos = ImVec2(0.0, 0.0);
 	};
-
-	void increase_brush_size();
-	void decrease_brush_size();
 };
 
 // `Canvas` the canvas pixel data in both the CPU and GPU. It is

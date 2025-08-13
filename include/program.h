@@ -8,11 +8,11 @@
 
 class Program {
 public:
-    Program() = default;
+    Program();
     Program(const std::string& vertex_path, const std::string& fragment_path);
     ~Program();
-    Program(const Program&) = default;
-    Program& operator=(const Program&) = default;
+    Program(const Program&) = delete;
+    Program& operator=(const Program&) = delete;
     Program(Program&&) noexcept;
     Program& operator=(Program&&) noexcept;
 

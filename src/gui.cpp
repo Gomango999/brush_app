@@ -1,6 +1,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <format>
+#include <memory>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -9,6 +10,7 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#include "brush.h"
 #include "canvas.h"
 #include "gui.h"
 #include "layer.h"
@@ -54,6 +56,7 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
 
     define_color_picker_window(user_state);
     define_brush_window(user_state);
+    define_brush_properties_window(user_state);
     define_canvas_window(canvas);
     define_debug_window(debug_state, user_state);
     define_error_popup();
@@ -72,8 +75,32 @@ void GUI::define_color_picker_window(UserState& user_state) {
 
 void GUI::define_brush_window(UserState& user_state) {
     ImGui::Begin("Brush");
-    ImGui::SliderFloat("Size", &user_state.radius, 1.0f, 1000.0f, "%f");
-    ImGui::SliderFloat("Opacity", &user_state.opacity, 0.0f, 1.0f);
+
+    ImGui::BeginChild("BrushList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    BrushManager& brush_manager = user_state.brush_manager;
+    for (const std::unique_ptr<Brush>& brush : brush_manager.brushes()) {
+        auto selected_brush_opt = brush_manager.get_selected_brush();
+        bool is_selected = selected_brush_opt.has_value() ?
+            brush->id() == selected_brush_opt.value().get().id() :
+            false;
+        if (ImGui::Selectable(brush->name().c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+            brush_manager.set_selected_brush(brush->id());
+        }
+    }
+    ImGui::EndChild();
+
+    ImGui::End();
+}
+
+void GUI::define_brush_properties_window(UserState& user_state) {
+    ImGui::Begin("Properties");
+    auto brush_opt = user_state.brush_manager.get_selected_brush();
+    if (brush_opt.has_value()) {
+        Brush& brush = brush_opt.value().get();
+
+        ImGui::SliderFloat("Size", &brush.size(), 1.0f, 1000.0f, "%f");
+        ImGui::SliderFloat("Opacity", &brush.opacity(), 0.0f, 1.0f);
+    }
     ImGui::End();
 }
 

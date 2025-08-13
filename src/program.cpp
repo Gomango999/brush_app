@@ -8,6 +8,8 @@
 #include "program.h"
 
 
+Program::Program() : m_program_id(0) {}
+
 Program::Program(const std::string& vertex_path, const std::string& fragment_path) {
     std::string vertex_code = load_shader_source(vertex_path);
     std::string fragment_code = load_shader_source(fragment_path);
@@ -44,7 +46,6 @@ Program::Program(Program&& other) noexcept
     other.m_program_id = 0; 
 }
 
-// Move assignment
 Program& Program::operator=(Program&& other) noexcept {
     if (this != &other) {
         if (m_program_id != 0) {

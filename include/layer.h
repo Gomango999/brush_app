@@ -4,6 +4,7 @@
 #include "glad/glad.h"
 #include "imgui.h"
 
+#include "brush.h"
 #include "program.h"
 
 class Layer {
@@ -28,7 +29,6 @@ private:
     GLuint m_fbo;
 
     Program m_quad_program;
-    Program m_round_brush_program;
 
     TileCoords calculate_tile_coords_from_pixel_coords(size_t x, size_t y);
     void commitTile(TileCoords coords, bool commit);
@@ -38,6 +38,7 @@ private:
 
     GLuint get_dummy_vao() const;
 
+
 public:
     Layer(size_t width, size_t height);
     ~Layer();
@@ -46,7 +47,7 @@ public:
     Layer(Layer&& other) noexcept;
     Layer& operator=(Layer&& other) noexcept;
 
-    void draw_circle(ImVec2 pos, ImVec4 color, float radius);
+    void draw_with_brush(Brush& brush, ImVec2 mouse_pos, ImVec4 color);
     void render();
 
     Id id() const { return m_id; }

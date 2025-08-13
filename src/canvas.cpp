@@ -9,6 +9,7 @@
 #include "glad/glad.h"
 #include "imgui.h"
 
+#include "brush.h"
 #include "canvas.h"
 #include "layer.h"
 #include "program.h"
@@ -131,14 +132,16 @@ void Canvas::draw_circle_at_pos(ImVec2 mouse_pos) {
     if (!layer_opt.has_value()) return;
     Layer& layer = layer_opt.value().get();
 
-    float radius = std::min(m_user_state.radius, MAX_BRUSH_RADIUS);
+    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
+    if (!brush_opt.has_value()) return;
+    Brush& brush = brush_opt.value().get();
 
-    layer.draw_circle(mouse_pos, m_user_state.color, radius);
+    layer.draw_with_brush(brush, mouse_pos, m_user_state.color);
 
     // TODO: Add code to deallocate tiles within the Layer class.
 }
 
-void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments=8) {
+void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments = 8) {
     if (!m_user_state.selected_layer.has_value()) return;
 
     Layer::Id layer_id = m_user_state.selected_layer.value();
@@ -146,19 +149,22 @@ void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, 
     if (!layer_opt.has_value()) return;
     Layer& layer = layer_opt.value().get();
 
-    float radius = std::min(m_user_state.radius, MAX_BRUSH_RADIUS);
-    
+    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
+    if (!brush_opt.has_value()) return;
+    Brush& brush = brush_opt.value().get();
+
     unsigned int start_index = draw_start ? 0 : 1;
     for (unsigned int i = start_index; i <= num_segments; i++) {
-        float alpha = (float) i / num_segments;
+        float alpha = (float)i / num_segments;
         ImVec2 pos = ImVec2(
             start.x * alpha + end.x * (1.0 - alpha),
             start.y * alpha + end.y * (1.0 - alpha)
         );
 
-        layer.draw_circle(pos, m_user_state.color, radius);
+        layer.draw_with_brush(brush, pos, m_user_state.color);
     }
 }
+
 
 GLuint Canvas::get_dummy_vao() const {
     // OpenGL requires a VAO to be bound in order for the call not
@@ -193,6 +199,11 @@ void Canvas::render_output_image() {
 }
 
 void Canvas::render_cursor() {
+    // TODO: Eventually, this call should be deferred to the brush itself.
+    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
+    if (!brush_opt.has_value()) return;
+    Brush& brush = brush_opt.value();
+
     m_cursor_program.use();
     // TODO: Move shared code into a Texture/FBO class  
     glActiveTexture(GL_TEXTURE0);
@@ -200,7 +211,7 @@ void Canvas::render_cursor() {
     m_cursor_program.set_uniform_1i("u_texture", 0);
     m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
     m_cursor_program.set_uniform_2f("u_mouse_pos", m_user_state.mouse_pos.x, m_user_state.mouse_pos.y);
-    m_cursor_program.set_uniform_1f("u_radius", m_user_state.radius);
+    m_cursor_program.set_uniform_1f("u_radius", brush.size());
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
@@ -228,14 +239,3 @@ GLuint Canvas::output_texture() const {
     return m_output_texture;
 }
 
-void UserState::decrease_brush_size() {
-    auto it = std::lower_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), radius);
-    if (it == BRUSH_SIZES.begin()) radius = MIN_BRUSH_SIZE;
-    else radius = *prev(it);
-}
-
-void UserState::increase_brush_size() {
-    auto it = std::upper_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), radius);
-    if (it == BRUSH_SIZES.begin()) radius = MAX_BRUSH_SIZE;
-    else radius = *it;
-}

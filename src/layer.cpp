@@ -6,6 +6,7 @@
 #include "glad/glad.h"
 #include "imgui.h"
 
+#include "brush.h"
 #include "layer.h"
 #include "program.h"
 
@@ -49,7 +50,6 @@ static GLuint generate_fbo(GLuint texture_id) {
 
 Layer::Layer(size_t width, size_t height)
     : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
-    m_round_brush_program("../src/shaders/quad.vert", "../src/shaders/draw_circle.frag"),
     m_width(width),
     m_height(height)
 {
@@ -74,7 +74,6 @@ Layer::Layer(size_t width, size_t height)
     allocateAllTiles();
 
     attach_gpu_texture_to_program(m_gpu_texture, m_quad_program);
-    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
 }
 
 Layer::~Layer() {
@@ -93,8 +92,7 @@ Layer::Layer(Layer&& other) noexcept
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
-    m_quad_program(std::move(other.m_quad_program)),
-    m_round_brush_program(std::move(other.m_round_brush_program))
+    m_quad_program(std::move(other.m_quad_program))
 {
     other.m_gpu_texture = 0;  
     other.m_fbo = 0;  
@@ -112,7 +110,6 @@ Layer& Layer::operator=(Layer&& other) noexcept {
         m_name = std::move(other.m_name);
         m_is_visible = other.m_is_visible;
         m_quad_program = std::move(other.m_quad_program);
-        m_round_brush_program = std::move(other.m_round_brush_program);
 
         other.m_gpu_texture = 0; 
         other.m_fbo = 0; 
@@ -168,16 +165,11 @@ GLuint Layer::get_dummy_vao() const {
     return dummy_vao;
 }
 
-void Layer::draw_circle(ImVec2 pos, ImVec4 color, float radius) {
+void Layer::draw_with_brush(Brush& brush, ImVec2 mouse_pos, ImVec4 color) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
 
-    m_round_brush_program.use();
-    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
-    m_round_brush_program.set_uniform_2f("u_tex_dim", m_width, m_height);
-    m_round_brush_program.set_uniform_2f("u_circle_pos", pos.x, pos.y);
-    m_round_brush_program.set_uniform_1f("u_radius", radius);
-    m_round_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
+    brush.draw_at_point(m_gpu_texture, ImVec2(m_width, m_height), mouse_pos, color);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
@@ -188,7 +180,7 @@ void Layer::render() {
     if (!m_is_visible) return;
 
     m_quad_program.use();
-    attach_gpu_texture_to_program(m_gpu_texture, m_round_brush_program);
+    attach_gpu_texture_to_program(m_gpu_texture, m_quad_program);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);

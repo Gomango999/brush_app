@@ -2,7 +2,7 @@
 #include <optional>
 #include <thread>
 
-#include "glad.h"
+#include "glad/glad.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 
@@ -73,11 +73,25 @@ void App::handle_inputs() {
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-        user_state.decrease_brush_size();
+        auto brush = user_state.brush_manager.get_selected_brush();
+        if (brush.has_value()) {
+            brush.value().get().decrease_size();
+        }
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_3)) {
-        user_state.increase_brush_size();
+        auto brush = user_state.brush_manager.get_selected_brush();
+        if (brush.has_value()) {
+            brush.value().get().increase_size();
+        }
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_D)) {
+        user_state.brush_manager.set_selected_brush_by_name("Pen");
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_E)) {
+        user_state.brush_manager.set_selected_brush_by_name("Eraser");
     }
 
     if (ImGui::IsMouseDown(0)) {
