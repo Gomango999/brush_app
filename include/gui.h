@@ -1,18 +1,21 @@
 #pragma once
-#include <glfw/glfw3.h>
-#include "imgui.h"
+#include <optional>
+#include <string>
+
+#include "imgui_impl_glfw.h"
 
 #include "canvas.h"
+#include "vec.h"
 
 struct DebugState {
     double dt;
-    ImVec2 mouse_pos;
+    Vec2 mouse_pos;
 };
 
 // GUI class responsible for defining the interface layout in Dear ImGui.
 class GUI {
 private:
-    ImVec2 m_canvas_window_pos;
+    Vec2 m_canvas_window_pos;
 
     std::optional<std::string> m_alert_message;
 
@@ -32,6 +35,6 @@ public:
     void define_layer_buttons(Canvas& canvas);
     void define_layer_list(Canvas& canvas);
 
-    ImVec2 get_mouse_position_on_canvas_window(double mouse_x, double mouse_y);
+    Vec2 get_mouse_position_on_canvas_window(Vec2 mouse_pos) const;
 };
 

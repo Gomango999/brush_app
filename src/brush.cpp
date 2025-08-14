@@ -5,10 +5,10 @@
 #include <string>
 
 #include "glad/glad.h"
-#include "imgui.h"
 
 #include "brush.h"
 #include "program.h"
+#include "vec.h"
 
 Brush::Brush() {
     static Id next_id = 0;
@@ -21,12 +21,30 @@ Brush::Brush() {
     next_id++;
 }
 
+
 GLuint Brush::get_dummy_vao() {
     static GLuint dummy_vao = 0;
     if (dummy_vao == 0) {
         glGenVertexArrays(1, &dummy_vao);
     }
     return dummy_vao;
+}
+
+void Brush::init_program(
+    GLuint texture,
+    Vec2 image_size,
+    Vec2 mouse_pos,
+    Vec3 color
+) {
+    m_brush_program.use();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    m_brush_program.set_uniform_1i("u_texture", 0);
+    m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
+    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
+    m_brush_program.set_uniform_1f("u_radius", m_size);
+    m_brush_program.set_uniform_1f("u_opacity", m_opacity);
+    m_brush_program.set_uniform_3f("u_color", color.r(), color.g(), color.b());
 }
 
 void Brush::apply_program() {
@@ -43,23 +61,12 @@ Program Brush::load_brush_program(const char* shader_path) {
 
 void Brush::draw_at_point(
     GLuint texture,
-    ImVec2 image_size,
-    ImVec2 mouse_pos,
-    ImVec4 color
+    Vec2 image_size,
+    Vec2 mouse_pos,
+    Vec3 color
 ) {
     init_program(texture, image_size, mouse_pos, color);
     apply_program();
-}
-
-void Brush::draw_on_segment(
-    GLuint fbo,
-    GLuint texture,
-    ImVec2 start,
-    ImVec2 end,
-    ImVec4 color,
-    bool include_start
-) {
-    // TODO: Add code for drawing on segment
 }
 
 const float MIN_BRUSH_SIZE = 1.0f;
@@ -94,34 +101,18 @@ float& Brush::opacity() {
     return m_opacity;
 }
 
+
 Pen::Pen() {
     m_name = "Pen";
-    m_size = 200.0f;
+    m_size = 150.0f;
     m_opacity = 1.0f;
 
     m_brush_program = load_brush_program("../src/shaders/brush_pen.frag");
 }
 
-void Pen::init_program(
-    GLuint texture,
-    ImVec2 image_size,
-    ImVec2 mouse_pos,
-    ImVec4 color
-) {
-    m_brush_program.use();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    m_brush_program.set_uniform_1i("u_texture", 0);
-    m_brush_program.set_uniform_2f("u_tex_dim", image_size.x, image_size.y);
-    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x, mouse_pos.y);
-    m_brush_program.set_uniform_1f("u_radius", m_size);
-    m_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
-}
-
-
 Eraser::Eraser() {
     m_name = "Eraser";
-    m_size = 100.0f;
+    m_size = 200.0f;
     m_opacity = 1.0f;
 
     m_brush_program = load_brush_program("../src/shaders/brush_eraser.frag");
@@ -129,18 +120,18 @@ Eraser::Eraser() {
 
 void Eraser::init_program(
     GLuint texture,
-    ImVec2 image_size,
-    ImVec2 mouse_pos,
-    ImVec4 color
+    Vec2 image_size,
+    Vec2 mouse_pos,
+    Vec3 _color
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     m_brush_program.set_uniform_1i("u_texture", 0);
-    m_brush_program.set_uniform_2f("u_tex_dim", image_size.x, image_size.y);
-    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x, mouse_pos.y);
+    m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
+    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
     m_brush_program.set_uniform_1f("u_radius", m_size);
-    m_brush_program.set_uniform_4f("u_color", color.x, color.y, color.z, color.w);
+    m_brush_program.set_uniform_1f("u_opacity", m_opacity);
 }
 
 

@@ -4,11 +4,11 @@
 #include <utility>
 
 #include "glad/glad.h"
-#include "imgui.h"
 
 #include "brush.h"
 #include "layer.h"
 #include "program.h"
+#include "vec.h"
 
 const GLenum Layer::texture_format = GL_RGBA8;
 const GLint Layer::num_mip_levels = 1;
@@ -165,12 +165,12 @@ GLuint Layer::get_dummy_vao() const {
     return dummy_vao;
 }
 
-void Layer::draw_with_brush(Brush& brush, ImVec2 mouse_pos, ImVec4 color) {
+void Layer::draw_with_brush(Brush& brush, Vec2 mouse_pos, Vec3 color) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
     glDisable(GL_BLEND);
 
-    brush.draw_at_point(m_gpu_texture, ImVec2(m_width, m_height), mouse_pos, color);
+    brush.draw_at_point(m_gpu_texture, Vec2{ float(m_width), float(m_height) }, mouse_pos, color);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);

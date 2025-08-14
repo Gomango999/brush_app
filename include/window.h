@@ -1,5 +1,7 @@
 #include <GLFW/glfw3.h>
 
+#include "vec.h"
+
 class Window {
 private: 
     GLFWwindow* m_window;
@@ -10,7 +12,7 @@ public:
     GLFWwindow* window();
 
 
-    void get_cursor_pos(double* mouse_x, double* mouse_y);
+    Vec2 get_cursor_pos();
 
     void set_should_close(int value);
     bool should_close();

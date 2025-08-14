@@ -1,32 +1,30 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 #include <optional>
 #include <vector>
 
 #include <glad/glad.h>
-#include "imgui.h"
 
 #include "brush.h"
 #include "layer.h"
 #include "program.h"
+#include "vec.h"
 
 
-// TODO: Should this really be stored as part of the canvas?
-// I suspect it's an app thing that should get passed around.
+// TODO: Move this into the app.cpp 
 struct UserState {
 
 	BrushManager brush_manager;
 	std::optional<Layer::Id> selected_layer;
-	ImVec4 color;
+	Vec3 color;
 
-	ImVec2 mouse_pos;
+	Vec2 mouse_pos;
 
 	UserState() : brush_manager() {
-		color = ImVec4(0.0, 0.0, 0.0, 1.0);
+		color = Vec3{ 0.0, 0.0, 0.0 };
 		selected_layer = std::nullopt;
-		mouse_pos = ImVec2(0.0, 0.0);
+		mouse_pos = Vec2{ 0.0, 0.0 };
 	};
 };
 
@@ -37,7 +35,7 @@ class Canvas {
 private:
 	size_t m_width, m_height;
 
-	ImVec4 m_base_color;
+	Vec3 m_base_color;
 	std::vector<Layer> m_layers;
 	GLuint m_output_fbo;
 	GLuint m_output_texture;
@@ -58,8 +56,8 @@ public:
 	bool get_layer_visibility(Layer::Id layer_id);
 	void set_layer_visibility(Layer::Id layer_id, bool is_visible);
 
-	void draw_circle_at_pos(ImVec2 pos);
-	void draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments = 8);
+	void draw_circle_at_pos(Vec2 pos);
+	void draw_circles_on_segment(Vec2 start, Vec2 end, bool draw_start, unsigned int num_segments = 8);
 
 	void render_output_image();
 

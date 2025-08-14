@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <format>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -14,6 +15,7 @@
 #include "canvas.h"
 #include "gui.h"
 #include "layer.h"
+#include "vec.h"
 
 GUI::GUI(GLFWwindow* window) {
     IMGUI_CHECKVERSION();
@@ -65,10 +67,11 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
 
 void GUI::define_color_picker_window(UserState& user_state) {
     ImGui::Begin("Color");
-    ImGui::ColorPicker4(
+    ImGui::ColorPicker3(
         "ColorPicker",
         (float*)&user_state.color,
-        ImGuiColorEditFlags_AlphaBar | ImGuiColorEditFlags_Float
+        ImGuiColorEditFlags_NoAlpha    
+        | ImGuiColorEditFlags_DisplayHSV
     );
     ImGui::End();
 }
@@ -110,7 +113,7 @@ void GUI::define_canvas_window(Canvas& canvas) {
     window_flags |= ImGuiWindowFlags_NoTitleBar;
     ImGui::Begin("Canvas", nullptr, window_flags);
 
-    m_canvas_window_pos = ImGui::GetCursorScreenPos();
+    m_canvas_window_pos = Vec<2>::from_ImVec2(ImGui::GetCursorScreenPos());
 
     ImGui::Image(
         (ImTextureID)canvas.output_texture(),
@@ -123,7 +126,7 @@ void GUI::define_debug_window(DebugState& debug_state, UserState& user_state) {
     ImGui::Begin("Debug");
     imgui_formatted_label_text("dt", "%.9f", debug_state.dt);
     imgui_formatted_label_text("fps", "%.9f", 1.0 / debug_state.dt);
-    imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x), int(debug_state.mouse_pos.y));
+    imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x()), int(debug_state.mouse_pos.y()));
     imgui_formatted_label_text("selected layer", "%d", user_state.selected_layer.has_value() ? user_state.selected_layer.value() : -1);
     ImGui::End();
 }
@@ -201,9 +204,6 @@ void GUI::define_layer_list(Canvas& canvas) {
     ImGui::EndChild();
 }
 
-ImVec2 GUI::get_mouse_position_on_canvas_window(double mouse_x, double mouse_y) {
-    return ImVec2(
-        mouse_x - m_canvas_window_pos.x,
-        mouse_y - m_canvas_window_pos.y
-    );
+Vec2 GUI::get_mouse_position_on_canvas_window(Vec2 mouse_pos) const {
+    return mouse_pos - m_canvas_window_pos;
 }

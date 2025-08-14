@@ -7,12 +7,12 @@
 #include <vector>
 
 #include "glad/glad.h"
-#include "imgui.h"
 
 #include "brush.h"
 #include "canvas.h"
 #include "layer.h"
 #include "program.h"
+#include "vec.h"
 
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
@@ -21,7 +21,7 @@ Canvas::Canvas(size_t width, size_t height): m_user_state() {
     m_width = width;
     m_height = height;
 
-    m_base_color = ImVec4(1.0, 1.0, 1.0, 1.0);
+    m_base_color = Vec3{ 1.0, 1.0, 1.0 };
 
     glGenFramebuffers(1, &m_output_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
@@ -124,7 +124,7 @@ void Canvas::set_layer_visibility(Layer::Id layer_id, bool is_visible) {
     }
 }
 
-void Canvas::draw_circle_at_pos(ImVec2 mouse_pos) {
+void Canvas::draw_circle_at_pos(Vec2 mouse_pos) {
     if (!m_user_state.selected_layer.has_value()) return;
 
     Layer::Id layer_id = m_user_state.selected_layer.value();
@@ -141,7 +141,7 @@ void Canvas::draw_circle_at_pos(ImVec2 mouse_pos) {
     // TODO: Add code to deallocate tiles within the Layer class.
 }
 
-void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments) {
+void Canvas::draw_circles_on_segment(Vec2 start, Vec2 end, bool draw_start, unsigned int num_segments) {
     if (!m_user_state.selected_layer.has_value()) return;
 
     Layer::Id layer_id = m_user_state.selected_layer.value();
@@ -156,10 +156,7 @@ void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, 
     unsigned int start_index = draw_start ? 0 : 1;
     for (unsigned int i = start_index; i <= num_segments; i++) {
         float alpha = (float)i / num_segments;
-        ImVec2 pos = ImVec2(
-            start.x * alpha + end.x * (1.0 - alpha),
-            start.y * alpha + end.y * (1.0 - alpha)
-        );
+        Vec2 pos = start * alpha + end * (1.0 - alpha);
 
         layer.draw_with_brush(brush, pos, m_user_state.color);
     }
@@ -184,7 +181,7 @@ void Canvas::render_output_image() {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glClearColor(m_base_color.x, m_base_color.y, m_base_color.z, 1.0);
+    glClearColor(m_base_color.r(), m_base_color.g(), m_base_color.b(), 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     for (Layer& layer : m_layers) {
@@ -198,8 +195,8 @@ void Canvas::render_output_image() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
+// TODO: Eventually, this call should be deferred to the brush itself.
 void Canvas::render_cursor() {
-    // TODO: Eventually, this call should be deferred to the brush itself.
     auto brush_opt = m_user_state.brush_manager.get_selected_brush();
     if (!brush_opt.has_value()) return;
     Brush& brush = brush_opt.value();
@@ -210,7 +207,7 @@ void Canvas::render_cursor() {
     glBindTexture(GL_TEXTURE_2D, m_output_texture);
     m_cursor_program.set_uniform_1i("u_texture", 0);
     m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
-    m_cursor_program.set_uniform_2f("u_mouse_pos", m_user_state.mouse_pos.x, m_user_state.mouse_pos.y);
+    m_cursor_program.set_uniform_2f("u_mouse_pos", m_user_state.mouse_pos.x(), m_user_state.mouse_pos.y());
     m_cursor_program.set_uniform_1f("u_radius", brush.size());
 
     GLuint dummy_vao = get_dummy_vao();

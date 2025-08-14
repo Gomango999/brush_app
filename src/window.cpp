@@ -3,6 +3,7 @@
 #include <glad/glad.h>
 
 #include "window.h"
+#include "vec.h"
 
 void error_callback(int error, const char* description) {
     std::cerr << "GLFW Error (" << error << "): " << description << std::endl;
@@ -54,6 +55,8 @@ bool Window::should_close() {
     return glfwWindowShouldClose(m_window);
 }
 
-void Window::get_cursor_pos(double* mouse_x, double* mouse_y) {
-    glfwGetCursorPos(m_window, mouse_x, mouse_y);
+Vec2 Window::get_cursor_pos() {
+    double mouse_x, mouse_y;
+    glfwGetCursorPos(m_window, &mouse_x, &mouse_y);
+    return Vec2{ float(mouse_x), float(mouse_y) };
 }

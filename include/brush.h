@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "glad/glad.h"
-#include "imgui.h"
 
 #include "program.h"
+#include "vec.h"
 
 class Brush {
 public:
@@ -26,33 +26,14 @@ protected:
 
     Brush();
 
-    virtual void init_program(
-        GLuint texture,
-        ImVec2 image_size,
-        ImVec2 mouse_pos,
-        ImVec4 color
-    ) = 0;
+    virtual void init_program(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 color);
 
     GLuint get_dummy_vao();
     void apply_program();
     Program load_brush_program(const char* shader_path);
 
 public:
-    void draw_at_point(
-        GLuint texture,
-        ImVec2 image_size,
-        ImVec2 mouse_pos,
-        ImVec4 color
-    );
-
-    void draw_on_segment(
-        GLuint fbo,
-        GLuint texture,
-        ImVec2 start,
-        ImVec2 end,
-        ImVec4 color,
-        bool include_start = false
-    );
+    void draw_at_point(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 color);
 
     void decrease_size();
     void increase_size();
@@ -66,13 +47,12 @@ public:
 class Pen : public Brush {
 public:
     Pen();
-    void init_program(GLuint texture, ImVec2 image_size, ImVec2 mouse_pos, ImVec4 color) override;
 };
 
 class Eraser : public Brush {
 public:
     Eraser();
-    void init_program(GLuint texture, ImVec2 image_size, ImVec2 mouse_pos, ImVec4 color) override;
+    void init_program(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 _color) override;
 };
 
 

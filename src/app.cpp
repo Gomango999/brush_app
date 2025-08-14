@@ -10,6 +10,7 @@
 #include "canvas.h"
 #include "gui.h"
 #include "layer.h"
+#include "vec.h"
 
 App::App(
     unsigned int screen_width,
@@ -64,7 +65,7 @@ void App::handle_inputs() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    ImVec2 mouse_pos = get_mouse_position_on_canvas();
+    Vec2 mouse_pos = get_mouse_position_on_canvas();
     UserState& user_state = m_canvas.user_state();
     user_state.mouse_pos = mouse_pos;
 
@@ -107,25 +108,24 @@ void App::handle_inputs() {
     }
 }
 
-ImVec2 App::get_mouse_position_on_canvas() {
-    double mouse_x, mouse_y;
-    m_window.get_cursor_pos(&mouse_x, &mouse_y);
+Vec2 App::get_mouse_position_on_canvas() {
+    Vec2 mouse_pos = m_window.get_cursor_pos();
 
-    ImVec2 pos_on_canvas_window = 
-        m_gui.get_mouse_position_on_canvas_window(mouse_x, mouse_y);
+    Vec2 pos_on_canvas_window = 
+        m_gui.get_mouse_position_on_canvas_window(mouse_pos);
 
     // SOMEDAY: When zoom is added, replace this calculation with something more
     // sophisticated.
-    ImVec2 pos_on_canvas = ImVec2(
-        pos_on_canvas_window.x / m_canvas_display_width * m_canvas.width(),
-        pos_on_canvas_window.y / m_canvas_display_height * m_canvas.width()
-    );
+    Vec2 pos_on_canvas{
+        pos_on_canvas_window.x() / m_canvas_display_width * m_canvas.width(),
+        pos_on_canvas_window.y() / m_canvas_display_height * m_canvas.width()
+    };
 
     return pos_on_canvas; 
 }
 
 DebugState App::generate_debug_state() {
-    ImVec2 mouse_pos = get_mouse_position_on_canvas();
+    Vec2 mouse_pos = get_mouse_position_on_canvas();
     return DebugState {
         m_last_dt,
         mouse_pos

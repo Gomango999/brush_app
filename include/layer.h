@@ -2,10 +2,10 @@
 #include <string>
 
 #include "glad/glad.h"
-#include "imgui.h"
 
 #include "brush.h"
 #include "program.h"
+#include "vec.h"
 
 class Layer {
 public:
@@ -47,7 +47,7 @@ public:
     Layer(Layer&& other) noexcept;
     Layer& operator=(Layer&& other) noexcept;
 
-    void draw_with_brush(Brush& brush, ImVec2 mouse_pos, ImVec4 color);
+    void draw_with_brush(Brush& brush, Vec2 mouse_pos, Vec3 color);
     void render();
 
     Id id() const { return m_id; }
