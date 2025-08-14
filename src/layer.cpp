@@ -172,7 +172,7 @@ GLuint Layer::get_dummy_vao() const {
     return dummy_vao;
 }
 
-void Layer::draw_with_brush(Brush& brush, Vec2 mouse_pos, Vec3 color, float pressure) {
+void Layer::draw_with_brush(Brush& brush, Vec2 mouse_pos, float pressure, Vec3 color) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
 
@@ -180,8 +180,8 @@ void Layer::draw_with_brush(Brush& brush, Vec2 mouse_pos, Vec3 color, float pres
         m_gpu_texture, 
         Vec2{ float(m_width), float(m_height) }, 
         mouse_pos, 
-        color, 
         pressure,
+        color, 
         m_is_alpha_locked
     );
 

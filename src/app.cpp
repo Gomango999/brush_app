@@ -69,18 +69,11 @@ void App::handle_inputs() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    Vec2 mouse_pos = get_cursor_position_on_canvas();
-    m_user_state.mouse_pos = mouse_pos;
-
-    Vec2 pen_pos = m_window.get_pen_pos();
-    float pen_pressure = m_window.get_pen_pressure();
-    bool pen_down = m_window.is_pen_down();
-
-    printf("mouse:(%5.0f, %5.0f) pen:(%5.0f, %5.0f) pressure:%9f mouse_down:%d pen_down:%d\n",
-        mouse_pos.x(), mouse_pos.y(), pen_pos.x(), pen_pos.y(),
-        pen_pressure, ImGui::IsMouseDown(0), pen_down
-    );
-    
+    Vec2 cursor_pos = get_cursor_position_on_canvas();
+    float pressure = m_window.is_pen_down() ?
+        m_window.get_pen_pressure() :
+        1.0;
+    m_user_state.cursor = CursorState(cursor_pos, pressure);
 
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         m_window.set_should_close(true);
@@ -110,37 +103,32 @@ void App::handle_inputs() {
 
     bool should_draw = m_window.is_mouse_down() || m_window.is_pen_down();
     if (should_draw) {
-        apply_brush_stroke();
+        apply_brush_stroke(m_user_state);
 
-        m_user_state.prev_mouse_pressed_pos = mouse_pos;
+        m_user_state.prev_cursor = m_user_state.cursor;
     }
     else {
-        m_user_state.prev_mouse_pressed_pos = std::nullopt;
+        m_user_state.prev_cursor = std::nullopt;
     }
 }
 
-void App::apply_brush_stroke() {
-    if (!m_user_state.selected_layer.has_value()) return;
+void App::apply_brush_stroke(UserState& user_state) {
+    if (!user_state.selected_layer.has_value()) return;
 
-    Layer::Id layer_id = m_user_state.selected_layer.value();
+    Layer::Id layer_id = user_state.selected_layer.value();
     auto layer_opt = m_canvas.lookup_layer(layer_id);
     if (!layer_opt.has_value()) return;
     Layer& layer = layer_opt.value().get();
 
-    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
+    auto brush_opt = user_state.brush_manager.get_selected_brush();
     if (!brush_opt.has_value()) return;
     Brush& brush = brush_opt.value().get();
 
-    float pressure = m_window.is_pen_down() ?
-        m_window.get_pen_pressure() :
-        1.0;
-
-    if (!m_user_state.prev_mouse_pressed_pos.has_value()) {
-        m_canvas.draw_circle_at_pos(layer, brush, m_user_state.mouse_pos, m_user_state.selected_color, pressure);
+    if (!user_state.prev_cursor.has_value()) {
+        m_canvas.draw_circle_at_pos(layer, brush, user_state.cursor, user_state.selected_color);
     }
     else {
-        Vec2 prev_mouse_pos = m_user_state.prev_mouse_pressed_pos.value();
-        m_canvas.draw_circles_on_segment(layer, brush, m_user_state.mouse_pos, prev_mouse_pos, m_user_state.selected_color, pressure);
+        m_canvas.draw_circles_on_segment(layer, brush, m_user_state.cursor, m_user_state.prev_cursor.value(), m_user_state.selected_color);
     }
 }
 
@@ -171,7 +159,7 @@ DebugState App::generate_debug_state() {
 }
 
 void App::render() {
-    m_canvas.render(m_user_state.brush_manager, m_user_state.mouse_pos);
+    m_canvas.render(m_user_state.brush_manager, m_user_state.cursor.pos);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ImGui::Render();

@@ -48,7 +48,7 @@ public:
     Layer(Layer&& other) noexcept;
     Layer& operator=(Layer&& other) noexcept;
 
-    void draw_with_brush(Brush& brush, Vec2 mouse_pos, Vec3 color, float pressure);
+    void draw_with_brush(Brush& brush, Vec2 mouse_pos, float pressure, Vec3 color);
     void render();
 
     Id id() const { return m_id; }

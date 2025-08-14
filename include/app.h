@@ -34,7 +34,7 @@ private:
     const double m_target_dt = 1.0 / m_target_fps;
 
     void handle_inputs();
-    void apply_brush_stroke();
+    void apply_brush_stroke(UserState& user_state);
     Vec2 get_cursor_position_on_canvas();
     DebugState generate_debug_state();
     void render();

@@ -98,7 +98,13 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-Window::Window(const char* title, size_t width, size_t height) {
+Window::Window(const char* title, size_t width, size_t height) :
+    m_pen_pos{0.0, 0.0},
+    m_pen_pressure(0.0),
+    m_pen_down(false),
+    m_mouse_pos{0.0, 0.0},
+    m_mouse_down(false)
+{
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
         exit(EXIT_FAILURE);
@@ -128,12 +134,6 @@ Window::Window(const char* title, size_t width, size_t height) {
         exit(EXIT_FAILURE);
     }
 
-    m_pen_pos = Vec2{ 0.0, 0.0 };
-    m_pen_pressure = 0.0;
-    m_pen_down = false;
-
-    m_mouse_pos = Vec2{ 0.0, 0.0 };
-    m_mouse_down = false;
 }
 
 Window::~Window() {

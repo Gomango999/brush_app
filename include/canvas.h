@@ -9,6 +9,7 @@
 #include "brush.h"
 #include "layer.h"
 #include "program.h"
+#include "user_state.h"
 #include "vec.h"
 
 // `Canvas` the canvas pixel data in both the CPU and GPU. It is
@@ -33,12 +34,11 @@ public:
 	std::optional<std::reference_wrapper<Layer>> lookup_layer(Layer::Id layer_id);
 
 
-	void draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color, float pressure);
+	void draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, Vec3 color);
 	void draw_circles_on_segment(
 		Layer& layer, Brush& brush, 
-		Vec2 start, Vec2 end, 
+		CursorState start, CursorState end, 
 		Vec3 color, 
-		float pressure,
 		bool include_start = false, 
 		unsigned int num_segments = 8
 	);

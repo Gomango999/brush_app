@@ -34,8 +34,8 @@ void Brush::set_program_uniforms(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
-    Vec3 color,
-    float pressure
+    float pressure,
+    Vec3 color
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
@@ -64,11 +64,11 @@ void Brush::draw_at_point(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
-    Vec3 color,
     float pressure,
+    Vec3 color,
     bool is_alpha_locked
 ) {
-    set_program_uniforms(texture, image_size, mouse_pos, color, pressure);
+    set_program_uniforms(texture, image_size, mouse_pos, pressure, color);
     set_blend_mode(is_alpha_locked);
     apply_program();
 }
@@ -140,8 +140,8 @@ void Eraser::set_program_uniforms(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
-    Vec3 _color,
-    float pressure
+    float pressure,
+    Vec3 _color
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);

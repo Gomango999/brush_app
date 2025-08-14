@@ -5,6 +5,19 @@
 #include "layer.h"
 #include "vec.h"
 
+struct CursorState {
+    Vec2 pos;
+    float pressure;
+    CursorState() {
+        pos = Vec2{ 0.0, 0.0 };
+        pressure = 0.0;
+    }
+    CursorState(Vec2 _pos, float _pressure) {
+        pos = _pos;
+        pressure = _pressure;
+    }
+};
+
 // UserState is used to inform how to draw to the screen.
 // It is modified and displayed within the GUI.
 struct UserState {
@@ -12,13 +25,13 @@ struct UserState {
     std::optional<Layer::Id> selected_layer;
     Vec3 selected_color;
 
-    Vec2 mouse_pos;
-    std::optional<Vec2> prev_mouse_pressed_pos;
+    CursorState cursor;
+    std::optional<CursorState> prev_cursor;
 
     UserState() : brush_manager() {
         selected_color = Vec3{ 0.0, 0.0, 0.0 };
         selected_layer = std::nullopt;
-        mouse_pos = Vec2{ 0.0, 0.0 };
-        prev_mouse_pressed_pos = std::nullopt;
+        cursor = CursorState();
+        prev_cursor = std::nullopt;
     };
 };
