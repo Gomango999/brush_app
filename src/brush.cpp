@@ -89,6 +89,14 @@ void Brush::increase_size() {
     else m_size = *it;
 }
 
+void Brush::decrease_opacity() {
+    m_opacity = std::max(0.0, m_opacity - 0.1);
+}
+
+void Brush::increase_opacity() {
+    m_opacity = std::min(1.0, m_opacity + 0.1);
+}
+
 Brush::Id Brush::id() const {
     return m_id;
 }

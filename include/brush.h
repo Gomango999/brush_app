@@ -24,6 +24,8 @@ public:
 
     void decrease_size();
     void increase_size();
+    void decrease_opacity();
+    void increase_opacity();
 
 protected:
 

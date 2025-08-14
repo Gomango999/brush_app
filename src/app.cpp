@@ -93,6 +93,20 @@ void App::handle_inputs() {
         }
     }
 
+    if (ImGui::IsKeyPressed(ImGuiKey_2)) {
+        auto brush = m_user_state.brush_manager.get_selected_brush();
+        if (brush.has_value()) {
+            brush.value().get().decrease_opacity();
+        }
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_4)) {
+        auto brush = m_user_state.brush_manager.get_selected_brush();
+        if (brush.has_value()) {
+            brush.value().get().increase_opacity();
+        }
+    }
+
     if (ImGui::IsKeyPressed(ImGuiKey_D)) {
         m_user_state.brush_manager.set_selected_brush_by_name("Pen");
     }
