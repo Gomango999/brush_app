@@ -181,6 +181,14 @@ void GUI::define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selecte
     if (ImGui::Button("Delete")) {
         selected_layer = canvas.delete_selected_layer(selected_layer);
     }
+    ImGui::SameLine();
+    if (ImGui::Button("^")) {
+        canvas.move_layer_up(selected_layer);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("v")) {
+        canvas.move_layer_down(selected_layer);
+    }
 }
 
 void GUI::define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_layer) {

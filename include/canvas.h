@@ -21,6 +21,8 @@ public:
 
 	Layer::Id insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer);
 	std::optional<Layer::Id> delete_selected_layer(std::optional<Layer::Id> selected_layer);
+	void move_layer_up(std::optional<Layer::Id> layer_id);
+	void move_layer_down(std::optional<Layer::Id> layer_id);
 	bool get_layer_visibility(Layer::Id layer_id);
 	void set_layer_visibility(Layer::Id layer_id, bool is_visible);
 	std::optional<std::reference_wrapper<Layer>> lookup_layer(Layer::Id layer_id);
@@ -52,6 +54,9 @@ private:
 	Program m_cursor_program;
 
 	GLuint get_dummy_vao() const;
+
+	void move_layer(std::optional<Layer::Id> layer_id, int delta);
+
 	void render_cursor(BrushManager& brush_manager, Vec2 mouse_pos);
 };
 

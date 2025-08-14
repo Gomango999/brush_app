@@ -97,6 +97,37 @@ std::optional<Layer::Id> Canvas::delete_selected_layer(std::optional<Layer::Id> 
     }
 }
 
+void Canvas::move_layer_up(std::optional<Layer::Id> layer_id) {
+    move_layer(layer_id, 1);
+}
+
+void Canvas::move_layer_down(std::optional<Layer::Id> layer_id) {
+    move_layer(layer_id, -1);
+}
+
+void Canvas::move_layer(std::optional<Layer::Id> layer_id, int delta) {
+    if (!layer_id.has_value()) return; 
+
+    // TODO: Move this search into a helper function
+    Layer::Id target_id = layer_id.value();
+    auto it = std::find_if(m_layers.begin(), m_layers.end(),
+        [target_id](const Layer& layer) { return layer.id() == target_id; });
+    if (it == m_layers.end()) return; 
+
+    int index = std::distance(m_layers.begin(), it);
+    int new_index = index + delta;
+    printf("%d -> %d\n", index, new_index);
+
+    new_index = std::min(new_index, int(m_layers.size() - 1));
+    new_index = std::max(new_index, 0);
+    if (index == new_index) return;
+
+    Layer layer = std::move(m_layers[index]);
+    m_layers.erase(m_layers.begin() + index);
+
+    m_layers.insert(m_layers.begin() + new_index, std::move(layer));
+}
+
 std::optional<std::reference_wrapper<Layer>> Canvas::lookup_layer(Layer::Id layer_id) {
     auto layer = std::find_if(m_layers.begin(), m_layers.end(),
         [layer_id](const Layer& layer) {
