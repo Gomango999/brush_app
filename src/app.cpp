@@ -124,6 +124,13 @@ void App::handle_inputs() {
     else {
         m_user_state.prev_cursor = std::nullopt;
     }
+
+    if (io.KeyAlt) {
+        std::optional<Vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
+        if (color_opt.has_value()) {
+            m_user_state.selected_color = color_opt.value();
+        }
+    }
 }
 
 void App::apply_brush_stroke(UserState& user_state) {

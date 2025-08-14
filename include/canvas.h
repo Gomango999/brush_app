@@ -43,6 +43,8 @@ public:
 		unsigned int num_segments = 8
 	);
 
+	std::optional<Vec3> get_color_at_pos(Vec2 pos);
+
 	void render(BrushManager& brush_manager, Vec2 mouse_pos);
 
 	size_t width() const;

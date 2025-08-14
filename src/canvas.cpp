@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cstdint>
 #include <exception>
 #include <functional>
 #include <iterator>
@@ -181,6 +182,23 @@ void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState sta
 
         draw_circle_at_pos(layer, brush, CursorState(pos, pressure), color);
     }
+}
+
+std::optional<Vec3> Canvas::get_color_at_pos(Vec2 point) {
+    if (point.x() < 0 || point.x() >= m_width ||
+        point.y() < 0 || point.y() >= m_height) {
+        return std::nullopt;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
+
+    uint8_t pixel[4];
+    glReadPixels(int(point.x()), int(point.y()), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel);
+    Vec3 color = Vec3{ float(pixel[0] / 255.0), float(pixel[1] / 255.0), float(pixel[2] / 255.0) };
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return color;
 }
 
 GLuint Canvas::get_dummy_vao() const {
