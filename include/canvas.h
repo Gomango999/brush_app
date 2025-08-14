@@ -59,7 +59,7 @@ public:
 	void set_layer_visibility(Layer::Id layer_id, bool is_visible);
 
 	void draw_circle_at_pos(ImVec2 pos);
-	void draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments);
+	void draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments = 8);
 
 	void render_output_image();
 

@@ -16,7 +16,8 @@ void main() {
 	float dist = distance(pixel_pos, u_circle_pos);
 
 	if (dist < u_radius) {
-		frag_color = mix(base_color, u_color, u_color.a);
+		float new_alpha = base_color.a * (1.0 - u_color.a);
+		frag_color = vec4(base_color.rgb, new_alpha);
 	} else {
 		frag_color = base_color;	
 	}

@@ -141,7 +141,7 @@ void Canvas::draw_circle_at_pos(ImVec2 mouse_pos) {
     // TODO: Add code to deallocate tiles within the Layer class.
 }
 
-void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments = 8) {
+void Canvas::draw_circles_on_segment(ImVec2 start, ImVec2 end, bool draw_start, unsigned int num_segments) {
     if (!m_user_state.selected_layer.has_value()) return;
 
     Layer::Id layer_id = m_user_state.selected_layer.value();

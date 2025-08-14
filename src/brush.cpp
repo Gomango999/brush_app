@@ -124,9 +124,7 @@ Eraser::Eraser() {
     m_size = 100.0f;
     m_opacity = 1.0f;
 
-    // TODO: Currently this is just the same behaviour as pen, but it stores
-    // it's own state. Eventually, write out own eraser shader.
-    m_brush_program = load_brush_program("../src/shaders/brush_pen.frag");
+    m_brush_program = load_brush_program("../src/shaders/brush_eraser.frag");
 }
 
 void Eraser::init_program(

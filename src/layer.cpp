@@ -94,8 +94,8 @@ Layer::Layer(Layer&& other) noexcept
     m_is_visible(other.m_is_visible),
     m_quad_program(std::move(other.m_quad_program))
 {
-    other.m_gpu_texture = 0;  
-    other.m_fbo = 0;  
+    other.m_gpu_texture = 0;
+    other.m_fbo = 0;
 }
 
 Layer& Layer::operator=(Layer&& other) noexcept {
@@ -111,8 +111,8 @@ Layer& Layer::operator=(Layer&& other) noexcept {
         m_is_visible = other.m_is_visible;
         m_quad_program = std::move(other.m_quad_program);
 
-        other.m_gpu_texture = 0; 
-        other.m_fbo = 0; 
+        other.m_gpu_texture = 0;
+        other.m_fbo = 0;
     }
     return *this;
 }
@@ -168,12 +168,13 @@ GLuint Layer::get_dummy_vao() const {
 void Layer::draw_with_brush(Brush& brush, ImVec2 mouse_pos, ImVec4 color) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
+    glDisable(GL_BLEND);
 
     brush.draw_at_point(m_gpu_texture, ImVec2(m_width, m_height), mouse_pos, color);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Layer::render() {
