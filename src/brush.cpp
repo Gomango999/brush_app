@@ -30,7 +30,7 @@ GLuint Brush::get_dummy_vao() {
     return dummy_vao;
 }
 
-void Brush::init_program(
+void Brush::set_program_uniforms(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
@@ -63,9 +63,11 @@ void Brush::draw_at_point(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
-    Vec3 color
+    Vec3 color,
+    bool is_alpha_locked
 ) {
-    init_program(texture, image_size, mouse_pos, color);
+    set_program_uniforms(texture, image_size, mouse_pos, color);
+    set_blend_mode(is_alpha_locked);
     apply_program();
 }
 
@@ -110,6 +112,16 @@ Pen::Pen() {
     m_brush_program = load_brush_program("../src/shaders/brush_pen.frag");
 }
 
+void Pen::set_blend_mode(bool is_alpha_locked) {
+    if (!is_alpha_locked) {
+        glDisable(GL_BLEND);
+    } else {
+        glEnable(GL_BLEND);
+        glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ZERO, GL_ONE);
+    }
+}
+
+
 Eraser::Eraser() {
     m_name = "Eraser";
     m_size = 200.0f;
@@ -118,7 +130,11 @@ Eraser::Eraser() {
     m_brush_program = load_brush_program("../src/shaders/brush_eraser.frag");
 }
 
-void Eraser::init_program(
+void Eraser::set_blend_mode(bool _is_alpha_locked) {
+    glDisable(GL_BLEND);
+}
+
+void Eraser::set_program_uniforms(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
@@ -133,6 +149,7 @@ void Eraser::init_program(
     m_brush_program.set_uniform_1f("u_radius", m_size);
     m_brush_program.set_uniform_1f("u_opacity", m_opacity);
 }
+
 
 
 BrushManager::BrushManager() {

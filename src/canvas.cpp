@@ -155,6 +155,19 @@ void Canvas::set_layer_visibility(Layer::Id layer_id, bool is_visible) {
     }
 }
 
+bool Canvas::get_layer_alpha_lock(Layer::Id layer_id) {
+    auto layer = lookup_layer(layer_id);
+    if (!layer.has_value()) return false;
+    return layer.value().get().is_alpha_locked();
+}
+
+void Canvas::set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked) {
+    auto layer = lookup_layer(layer_id);
+    if (layer.has_value()) {
+        layer.value().get().set_alpha_lock(is_alpha_locked);
+    }
+}
+
 void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color) {
     layer.draw_with_brush(brush, mouse_pos, color);
 }

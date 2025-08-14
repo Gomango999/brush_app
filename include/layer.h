@@ -19,6 +19,7 @@ private:
     Id m_id;
     std::string m_name;
     bool m_is_visible;
+    bool m_is_alpha_locked;
 
     static const GLenum texture_format;
     static const GLint num_mip_levels;
@@ -57,6 +58,9 @@ public:
 
     bool is_visible() const { return m_is_visible; }
     void set_visible(bool visible) { m_is_visible = visible; }
+
+    bool is_alpha_locked() const { return m_is_alpha_locked; }
+    void set_alpha_lock(bool locked) { m_is_alpha_locked = locked; }
 
     GLuint gpu_texture() const { return m_gpu_texture; }
 };

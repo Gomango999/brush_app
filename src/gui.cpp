@@ -189,6 +189,19 @@ void GUI::define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selecte
     if (ImGui::Button("v")) {
         canvas.move_layer_down(selected_layer);
     }
+    ImGui::SameLine();
+    bool alpha_lock_disabled = !selected_layer.has_value();
+    ImGui::BeginDisabled(alpha_lock_disabled);
+    bool alpha_locked = selected_layer.has_value() ?
+        canvas.get_layer_alpha_lock(selected_layer.value()) :
+        false;
+
+    if (ImGui::Checkbox("##layer_alpha_locked_checkbox", &alpha_locked)) {
+        if (selected_layer.has_value()) {
+            canvas.set_layer_alpha_lock(selected_layer.value(), alpha_locked);
+        }
+    }
+    ImGui::EndDisabled();
 }
 
 void GUI::define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_layer) {

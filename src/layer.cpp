@@ -61,6 +61,7 @@ Layer::Layer(size_t width, size_t height)
     m_name = std::format("Layer {}", current_id);
 
     m_is_visible = true;
+    m_is_alpha_locked = false;
 
     if (!GLAD_GL_ARB_sparse_texture) {
         throw std::runtime_error("GL_ARB_sparse_texture not supported");
@@ -93,6 +94,7 @@ Layer::Layer(Layer&& other) noexcept
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
+    m_is_alpha_locked(other.m_is_alpha_locked),
     m_quad_program(std::move(other.m_quad_program))
 {
     other.m_gpu_texture = 0;
@@ -110,6 +112,7 @@ Layer& Layer::operator=(Layer&& other) noexcept {
         m_id = other.m_id;
         m_name = std::move(other.m_name);
         m_is_visible = other.m_is_visible;
+        m_is_alpha_locked = other.m_is_alpha_locked;
         m_quad_program = std::move(other.m_quad_program);
 
         other.m_gpu_texture = 0;
@@ -172,9 +175,14 @@ GLuint Layer::get_dummy_vao() const {
 void Layer::draw_with_brush(Brush& brush, Vec2 mouse_pos, Vec3 color) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
-    glDisable(GL_BLEND);
 
-    brush.draw_at_point(m_gpu_texture, Vec2{ float(m_width), float(m_height) }, mouse_pos, color);
+    brush.draw_at_point(
+        m_gpu_texture, 
+        Vec2{ float(m_width), float(m_height) }, 
+        mouse_pos, 
+        color, 
+        m_is_alpha_locked
+    );
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);

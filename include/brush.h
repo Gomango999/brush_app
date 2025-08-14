@@ -15,6 +15,16 @@ class Brush {
 public:
     typedef unsigned long long Id;
 
+    Id id() const;
+    std::string name() const;
+    float& size();
+    float& opacity();
+
+    void draw_at_point(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 color, bool is_alpha_locked);
+
+    void decrease_size();
+    void increase_size();
+
 protected:
 
     Id m_id;
@@ -26,33 +36,25 @@ protected:
 
     Brush();
 
-    virtual void init_program(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 color);
+    virtual void set_program_uniforms(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 color);
+    virtual void set_blend_mode(bool is_alpha_locked) = 0;
 
     GLuint get_dummy_vao();
     void apply_program();
     Program load_brush_program(const char* shader_path);
-
-public:
-    void draw_at_point(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 color);
-
-    void decrease_size();
-    void increase_size();
-
-    Id id() const;
-    std::string name() const;
-    float& size();
-    float& opacity();
 };
 
 class Pen : public Brush {
 public:
     Pen();
+    void set_blend_mode(bool is_alpha_locked);
 };
 
 class Eraser : public Brush {
 public:
     Eraser();
-    void init_program(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 _color) override;
+    void set_blend_mode(bool _is_alpha_locked);
+    void set_program_uniforms(GLuint texture, Vec2 image_size, Vec2 mouse_pos, Vec3 _color) override;
 };
 
 
