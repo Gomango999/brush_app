@@ -178,6 +178,9 @@ void GUI::define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selecte
         }
     }
     ImGui::SameLine();
+
+    ImGui::BeginDisabled(!selected_layer.has_value());
+
     if (ImGui::Button("Delete")) {
         selected_layer = canvas.delete_selected_layer(selected_layer);
     }
@@ -190,8 +193,6 @@ void GUI::define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selecte
         canvas.move_layer_down(selected_layer);
     }
     ImGui::SameLine();
-    bool alpha_lock_disabled = !selected_layer.has_value();
-    ImGui::BeginDisabled(alpha_lock_disabled);
     bool alpha_locked = selected_layer.has_value() ?
         canvas.get_layer_alpha_lock(selected_layer.value()) :
         false;
@@ -201,6 +202,7 @@ void GUI::define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selecte
             canvas.set_layer_alpha_lock(selected_layer.value(), alpha_locked);
         }
     }
+
     ImGui::EndDisabled();
 }
 
