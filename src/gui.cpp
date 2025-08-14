@@ -15,6 +15,7 @@
 #include "canvas.h"
 #include "gui.h"
 #include "layer.h"
+#include "user_state.h"
 #include "vec.h"
 
 GUI::GUI(GLFWwindow* window) {
@@ -48,39 +49,42 @@ static void imgui_formatted_label_text(const char* label, const char* fmt, ...) 
     ImGui::LabelText(label, "%s", buffer);
 }
 
-void GUI::define_interface(Canvas& canvas, DebugState debug_state, size_t canvas_display_width, size_t canvas_display_height) {
+void GUI::define_interface(
+    UserState& user_state, 
+    Canvas& canvas, 
+    DebugState debug_state, 
+    size_t canvas_display_width, 
+    size_t canvas_display_height
+) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
-    
-    UserState& user_state = canvas.user_state();
 
-    define_color_picker_window(user_state);
-    define_brush_window(user_state);
-    define_brush_properties_window(user_state);
+    define_color_picker_window(user_state.selected_color);
+    define_brush_window(user_state.brush_manager);
+    define_brush_properties_window(user_state.brush_manager);
     define_canvas_window(canvas, canvas_display_width, canvas_display_height);
     define_debug_window(debug_state, user_state);
     define_error_popup();
-    define_layer_window(canvas);
+    define_layer_window(canvas, user_state.selected_layer);
 }
 
-void GUI::define_color_picker_window(UserState& user_state) {
+void GUI::define_color_picker_window(Vec3& color) {
     ImGui::Begin("Color");
     ImGui::ColorPicker3(
         "ColorPicker",
-        (float*)&user_state.color,
+        (float*)&color,
         ImGuiColorEditFlags_NoAlpha    
         | ImGuiColorEditFlags_DisplayHSV
     );
     ImGui::End();
 }
 
-void GUI::define_brush_window(UserState& user_state) {
+void GUI::define_brush_window(BrushManager& brush_manager) {
     ImGui::Begin("Brush");
 
     ImGui::BeginChild("BrushList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-    BrushManager& brush_manager = user_state.brush_manager;
     for (const std::unique_ptr<Brush>& brush : brush_manager.brushes()) {
         auto selected_brush_opt = brush_manager.get_selected_brush();
         bool is_selected = selected_brush_opt.has_value() ?
@@ -95,9 +99,9 @@ void GUI::define_brush_window(UserState& user_state) {
     ImGui::End();
 }
 
-void GUI::define_brush_properties_window(UserState& user_state) {
+void GUI::define_brush_properties_window(BrushManager& brush_manager) {
     ImGui::Begin("Properties");
-    auto brush_opt = user_state.brush_manager.get_selected_brush();
+    auto brush_opt = brush_manager.get_selected_brush();
     if (brush_opt.has_value()) {
         Brush& brush = brush_opt.value().get();
 
@@ -155,20 +159,19 @@ void GUI::define_error_popup() {
     }
 }
 
-void GUI::define_layer_window(Canvas& canvas)
+void GUI::define_layer_window(Canvas& canvas, std::optional<Layer::Id>& selected_layer)
 {
     ImGui::Begin("Layers");
-    define_layer_buttons(canvas);
-    define_layer_list(canvas);
+    define_layer_buttons(canvas, selected_layer);
+    define_layer_list(canvas, selected_layer);
     ImGui::End();
 }
 
-void GUI::define_layer_buttons(Canvas& canvas) {
+void GUI::define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selected_layer) {
     if (ImGui::Button("New")) {
         try {
-            UserState& user_state = canvas.user_state();
-            Layer::Id new_layer_id = canvas.insert_new_layer_above_selected();
-            user_state.selected_layer = new_layer_id;
+            Layer::Id new_layer_id = canvas.insert_new_layer_above_selected(selected_layer);
+            selected_layer = new_layer_id;
         }
         catch (const std::runtime_error& e) {
             m_alert_message = e.what();
@@ -176,11 +179,11 @@ void GUI::define_layer_buttons(Canvas& canvas) {
     }
     ImGui::SameLine();
     if (ImGui::Button("Delete")) {
-        canvas.delete_selected_layer();
+        selected_layer = canvas.delete_selected_layer(selected_layer);
     }
 }
 
-void GUI::define_layer_list(Canvas& canvas) {
+void GUI::define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_layer) {
     ImGui::BeginChild("LayerList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
     for (auto& layer : std::views::reverse(canvas.get_layers())) {
 
@@ -192,12 +195,11 @@ void GUI::define_layer_list(Canvas& canvas) {
 
         ImGui::SameLine();
 
-        UserState& user_state = canvas.user_state();
-        bool is_selected = user_state.selected_layer.has_value() ?
-            layer.id() == user_state.selected_layer.value() :
+        bool is_selected = selected_layer.has_value() ?
+            layer.id() == selected_layer.value() :
             false;
         if (ImGui::Selectable(layer.name().c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-            user_state.selected_layer = layer.id();
+            selected_layer = layer.id();
         }
 
     }

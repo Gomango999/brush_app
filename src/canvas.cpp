@@ -17,7 +17,7 @@
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
 
-Canvas::Canvas(size_t width, size_t height): m_user_state() {
+Canvas::Canvas(size_t width, size_t height) {
     m_width = width;
     m_height = height;
 
@@ -51,9 +51,9 @@ Canvas::~Canvas() {
     if (m_output_texture != 0) glDeleteFramebuffers(1, &m_output_texture);
 }
 
-Layer::Id Canvas::insert_new_layer_above_selected() {
-    Layer::Id target_layer_id = m_user_state.selected_layer.has_value() ?
-        m_user_state.selected_layer.value() :
+Layer::Id Canvas::insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer) {
+    Layer::Id target_layer_id = selected_layer.has_value() ?
+        selected_layer.value() :
         m_layers.size() > 0 ? m_layers.back().id() : 0;
 
     auto insert_position = std::find_if(m_layers.begin(), m_layers.end(),
@@ -74,26 +74,26 @@ Layer::Id Canvas::insert_new_layer_above_selected() {
     return new_layer_id;
 }
 
-void Canvas::delete_selected_layer() {
-    if (!m_user_state.selected_layer.has_value()) return;
+std::optional<Layer::Id> Canvas::delete_selected_layer(std::optional<Layer::Id> selected_layer) {
+    if (!selected_layer.has_value()) return selected_layer;
 
-    Layer::Id target_layer_id = m_user_state.selected_layer.value();
+    Layer::Id target_layer_id = selected_layer.value();
 
     auto it = std::find_if(m_layers.begin(), m_layers.end(),
         [target_layer_id](const Layer& layer) {
             return layer.id() == target_layer_id;
         });
-    if (it == m_layers.end()) return;
+    if (it == m_layers.end()) return selected_layer;
 
     size_t index = std::distance(m_layers.begin(), it);
     m_layers.erase(it);
 
     if (m_layers.empty()) {
-        m_user_state.selected_layer = std::nullopt;
+        return std::nullopt;
     } else if (index == 0) {
-        m_user_state.selected_layer = m_layers[0].id();
+        return m_layers[0].id();
     } else {
-        m_user_state.selected_layer = m_layers[index-1].id();
+        return m_layers[index-1].id();
     }
 }
 
@@ -124,44 +124,19 @@ void Canvas::set_layer_visibility(Layer::Id layer_id, bool is_visible) {
     }
 }
 
-void Canvas::draw_circle_at_pos(Vec2 mouse_pos) {
-    if (!m_user_state.selected_layer.has_value()) return;
-
-    Layer::Id layer_id = m_user_state.selected_layer.value();
-    auto layer_opt = lookup_layer(layer_id);
-    if (!layer_opt.has_value()) return;
-    Layer& layer = layer_opt.value().get();
-
-    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
-    if (!brush_opt.has_value()) return;
-    Brush& brush = brush_opt.value().get();
-
-    layer.draw_with_brush(brush, mouse_pos, m_user_state.color);
-
-    // TODO: Add code to deallocate tiles within the Layer class.
+void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color) {
+    layer.draw_with_brush(brush, mouse_pos, color);
 }
 
-void Canvas::draw_circles_on_segment(Vec2 start, Vec2 end, bool draw_start, unsigned int num_segments) {
-    if (!m_user_state.selected_layer.has_value()) return;
-
-    Layer::Id layer_id = m_user_state.selected_layer.value();
-    auto layer_opt = lookup_layer(layer_id);
-    if (!layer_opt.has_value()) return;
-    Layer& layer = layer_opt.value().get();
-
-    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
-    if (!brush_opt.has_value()) return;
-    Brush& brush = brush_opt.value().get();
-
-    unsigned int start_index = draw_start ? 0 : 1;
+void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, Vec2 start, Vec2 end, Vec3 color, bool include_start, unsigned int num_segments) {
+    unsigned int start_index = include_start ? 0 : 1;
     for (unsigned int i = start_index; i <= num_segments; i++) {
         float alpha = (float)i / num_segments;
         Vec2 pos = start * alpha + end * (1.0 - alpha);
 
-        layer.draw_with_brush(brush, pos, m_user_state.color);
+        draw_circle_at_pos(layer, brush, pos, color);
     }
 }
-
 
 GLuint Canvas::get_dummy_vao() const {
     // OpenGL requires a VAO to be bound in order for the call not
@@ -175,7 +150,7 @@ GLuint Canvas::get_dummy_vao() const {
 }
 
 // Combines all the layers together in a single framebuffer.
-void Canvas::render_output_image() {
+void Canvas::render(BrushManager& brush_manager, Vec2 mouse_pos) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
     glViewport(0, 0, m_width, m_height);
     glEnable(GL_BLEND);
@@ -188,7 +163,7 @@ void Canvas::render_output_image() {
         layer.render();
     }
     
-    render_cursor();
+    render_cursor(brush_manager, mouse_pos);
 
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.
@@ -196,8 +171,8 @@ void Canvas::render_output_image() {
 }
 
 // TODO: Eventually, this call should be deferred to the brush itself.
-void Canvas::render_cursor() {
-    auto brush_opt = m_user_state.brush_manager.get_selected_brush();
+void Canvas::render_cursor(BrushManager& brush_manager, Vec2 mouse_pos) {
+    auto brush_opt = brush_manager.get_selected_brush();
     if (!brush_opt.has_value()) return;
     Brush& brush = brush_opt.value();
 
@@ -207,7 +182,7 @@ void Canvas::render_cursor() {
     glBindTexture(GL_TEXTURE_2D, m_output_texture);
     m_cursor_program.set_uniform_1i("u_texture", 0);
     m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
-    m_cursor_program.set_uniform_2f("u_mouse_pos", m_user_state.mouse_pos.x(), m_user_state.mouse_pos.y());
+    m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos.x(), mouse_pos.y());
     m_cursor_program.set_uniform_1f("u_radius", brush.size());
 
     GLuint dummy_vao = get_dummy_vao();
@@ -222,10 +197,6 @@ size_t Canvas::width() const {
 
 size_t Canvas::height() const {
     return m_height;
-}
-
-UserState& Canvas::user_state() {
-    return m_user_state;
 }
 
 const std::vector<Layer>& Canvas::get_layers() const {
