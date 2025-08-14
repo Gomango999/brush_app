@@ -34,7 +34,8 @@ void Brush::set_program_uniforms(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
-    Vec3 color
+    Vec3 color,
+    float pressure
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
@@ -42,7 +43,7 @@ void Brush::set_program_uniforms(
     m_brush_program.set_uniform_1i("u_texture", 0);
     m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
     m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
-    m_brush_program.set_uniform_1f("u_radius", m_size);
+    m_brush_program.set_uniform_1f("u_radius", m_size * pressure);
     m_brush_program.set_uniform_1f("u_opacity", m_opacity);
     m_brush_program.set_uniform_3f("u_color", color.r(), color.g(), color.b());
 }
@@ -64,9 +65,10 @@ void Brush::draw_at_point(
     Vec2 image_size,
     Vec2 mouse_pos,
     Vec3 color,
+    float pressure,
     bool is_alpha_locked
 ) {
-    set_program_uniforms(texture, image_size, mouse_pos, color);
+    set_program_uniforms(texture, image_size, mouse_pos, color, pressure);
     set_blend_mode(is_alpha_locked);
     apply_program();
 }
@@ -138,7 +140,8 @@ void Eraser::set_program_uniforms(
     GLuint texture,
     Vec2 image_size,
     Vec2 mouse_pos,
-    Vec3 _color
+    Vec3 _color,
+    float pressure
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
@@ -146,7 +149,7 @@ void Eraser::set_program_uniforms(
     m_brush_program.set_uniform_1i("u_texture", 0);
     m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
     m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
-    m_brush_program.set_uniform_1f("u_radius", m_size);
+    m_brush_program.set_uniform_1f("u_radius", m_size * pressure);
     m_brush_program.set_uniform_1f("u_opacity", m_opacity);
 }
 

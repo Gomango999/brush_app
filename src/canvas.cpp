@@ -168,17 +168,17 @@ void Canvas::set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked) {
     }
 }
 
-void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color) {
-    layer.draw_with_brush(brush, mouse_pos, color);
+void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color, float pressure) {
+    layer.draw_with_brush(brush, mouse_pos, color, pressure);
 }
 
-void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, Vec2 start, Vec2 end, Vec3 color, bool include_start, unsigned int num_segments) {
+void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, Vec2 start, Vec2 end, Vec3 color, float pressure, bool include_start, unsigned int num_segments) {
     unsigned int start_index = include_start ? 0 : 1;
     for (unsigned int i = start_index; i <= num_segments; i++) {
         float alpha = (float)i / num_segments;
         Vec2 pos = start * alpha + end * (1.0 - alpha);
 
-        draw_circle_at_pos(layer, brush, pos, color);
+        draw_circle_at_pos(layer, brush, pos, color, pressure);
     }
 }
 

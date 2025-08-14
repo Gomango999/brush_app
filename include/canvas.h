@@ -33,11 +33,12 @@ public:
 	std::optional<std::reference_wrapper<Layer>> lookup_layer(Layer::Id layer_id);
 
 
-	void draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color);
+	void draw_circle_at_pos(Layer& layer, Brush& brush, Vec2 mouse_pos, Vec3 color, float pressure);
 	void draw_circles_on_segment(
 		Layer& layer, Brush& brush, 
 		Vec2 start, Vec2 end, 
 		Vec3 color, 
+		float pressure,
 		bool include_start = false, 
 		unsigned int num_segments = 8
 	);

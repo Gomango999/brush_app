@@ -63,4 +63,5 @@ target_sources(brush_app PRIVATE ${SHADER_FILES})
 target_link_libraries(brush_app PRIVATE
     glfw3
     gdi32
+    user32
 )

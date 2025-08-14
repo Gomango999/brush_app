@@ -30,12 +30,12 @@ private:
 
     double m_last_update_time;
     double m_last_dt;
-    const double m_target_fps = 60.0;
+    const double m_target_fps = 120.0;
     const double m_target_dt = 1.0 / m_target_fps;
 
     void handle_inputs();
     void apply_brush_stroke();
-    Vec2 get_mouse_position_on_canvas();
+    Vec2 get_cursor_position_on_canvas();
     DebugState generate_debug_state();
     void render();
 };
