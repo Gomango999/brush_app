@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <format>
 #include <stdexcept>
 #include <string>
@@ -125,12 +126,15 @@ void Layer::commitTile(TileCoords coords, bool commit) {
     size_t x_offset = coords.x * m_tile_width;
     size_t y_offset = coords.y * m_tile_height;
 
+    size_t width = std::min(m_tile_width, int(m_width) - int(x_offset));
+    size_t height = std::min(m_tile_height, int(m_height) - int(y_offset));
+
     glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
     glTexPageCommitmentARB(
         GL_TEXTURE_2D,
         0,
         x_offset, y_offset, 0,
-        m_tile_width, m_tile_height, 1,
+        width, height, 1,
         commit
     );
 }
