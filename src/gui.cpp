@@ -48,7 +48,7 @@ static void imgui_formatted_label_text(const char* label, const char* fmt, ...) 
     ImGui::LabelText(label, "%s", buffer);
 }
 
-void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
+void GUI::define_interface(Canvas& canvas, DebugState debug_state, size_t canvas_display_width, size_t canvas_display_height) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
@@ -59,7 +59,7 @@ void GUI::define_interface(Canvas& canvas, DebugState debug_state) {
     define_color_picker_window(user_state);
     define_brush_window(user_state);
     define_brush_properties_window(user_state);
-    define_canvas_window(canvas);
+    define_canvas_window(canvas, canvas_display_width, canvas_display_height);
     define_debug_window(debug_state, user_state);
     define_error_popup();
     define_layer_window(canvas);
@@ -108,7 +108,7 @@ void GUI::define_brush_properties_window(UserState& user_state) {
 }
 
 
-void GUI::define_canvas_window(Canvas& canvas) {
+void GUI::define_canvas_window(Canvas& canvas, size_t canvas_display_width, size_t canvas_display_height) {
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
     ImGui::Begin("Canvas", nullptr, window_flags);
@@ -117,7 +117,7 @@ void GUI::define_canvas_window(Canvas& canvas) {
 
     ImGui::Image(
         (ImTextureID)canvas.output_texture(),
-        ImVec2(800, 800)
+        ImVec2(canvas_display_width, canvas_display_height)
     );
     ImGui::End();
 }

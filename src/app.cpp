@@ -22,8 +22,8 @@ App::App(
       m_screen_height(screen_height),
       // SOMEDAY: To be removed when we implement zooming. For now we just
       // hard code the canvas's display size on the screen.
-      m_canvas_display_width(800),
-      m_canvas_display_height(800),
+      m_canvas_display_width(1200),
+      m_canvas_display_height(1200),
       m_window("Brush App", screen_width, screen_height),
       m_gui(m_window.window()),
       m_canvas(canvas_width, canvas_height)
@@ -45,8 +45,7 @@ void App::run() {
         DebugState debug_state = generate_debug_state();
         m_gui.define_interface(
             m_canvas,
-            debug_state
-        );
+            debug_state, m_canvas_display_width, m_canvas_display_height);
 
         render();
 
