@@ -116,21 +116,21 @@ void App::handle_inputs() {
         m_user_state.brush_manager.set_selected_brush_by_name("Eraser");
     }
 
-    bool should_draw = m_window.is_mouse_down() || m_window.is_pen_down();
-    if (should_draw) {
-        apply_brush_stroke(m_user_state);
+    bool mouse_down = m_window.is_mouse_down() || m_window.is_pen_down();
+    if (mouse_down) {
+        if (io.KeyAlt) {
+            std::optional<Vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
+            if (color_opt.has_value()) {
+                m_user_state.selected_color = color_opt.value();
+            }
+        } else {
+            apply_brush_stroke(m_user_state);
+        }
 
         m_user_state.prev_cursor = m_user_state.cursor;
     }
     else {
         m_user_state.prev_cursor = std::nullopt;
-    }
-
-    if (io.KeyAlt) {
-        std::optional<Vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
-        if (color_opt.has_value()) {
-            m_user_state.selected_color = color_opt.value();
-        }
     }
 }
 
