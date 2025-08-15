@@ -44,7 +44,8 @@ void App::run() {
 
         handle_inputs();
 
-        // TODO: Think about why multiplying by 0.9 makes it feel smoother
+        // We multiply by 0.9 since if we wait until after we hit the target_dt,
+        // we miss the next "frame cycle", so we are actually rendering at 30fps.
         if (glfwGetTime() - m_last_update_time > m_target_display_dt * 0.9) {
             DebugState debug_state = generate_debug_state();
 
