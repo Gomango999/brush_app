@@ -17,6 +17,8 @@ private:
     Vec2 m_mouse_pos;
     bool m_mouse_down;
 
+    bool m_windows_cursor_visible;
+
 public:
     Window(const char *title, size_t width, size_t height);
     ~Window(); 
@@ -37,6 +39,9 @@ public:
 
     void set_mouse_pos(const Vec2& pos) { m_mouse_pos = pos; }
     void set_mouse_down(bool down) { m_mouse_down = down; }
+
+    void hide_cursor();    
+    void show_cursor();
 
     void set_should_close(int value);
     bool should_close();

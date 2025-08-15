@@ -4,6 +4,7 @@
 
 #include "imgui_impl_glfw.h"
 
+#include "brush.h"
 #include "canvas.h"
 #include "layer.h"
 #include "user_state.h"
@@ -17,22 +18,22 @@ struct DebugState {
 // GUI class responsible for defining the interface layout in Dear ImGui.
 class GUI {
 private:
+    Vec2 m_canvas_display_size;
+
     Vec2 m_canvas_window_pos;
+    Vec2 m_canvas_window_size;
 
     std::optional<std::string> m_alert_message;
 
 public: 
-    GUI(GLFWwindow* window);
+    GUI(GLFWwindow* window, Vec2 canvas_size);
     ~GUI();
 
     void define_interface(
         UserState& user_state,
-        Canvas& canvas, 
-        DebugState debug_state, 
-        size_t canvas_display_width, 
-        size_t canvas_display_height
+        Canvas& canvas,
+        DebugState debug_state
     );
-
 
     void define_color_picker_window(Vec3& color);
     void define_brush_window(BrushManager& brush_manager);
@@ -42,9 +43,12 @@ public:
     void define_layer_window(Canvas& canvas, std::optional<Layer::Id>& selected_layer);
     void define_layer_buttons(Canvas& canvas, std::optional<Layer::Id>& selected_layer);
     void define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_layer);
-    void define_canvas_window(Canvas& canvas, size_t canvas_display_width, size_t canvas_display_height);
+    void define_canvas_window(Canvas& canvas);
 
 
+    bool is_hovering_canvas(Vec2 mouse_pos) const;
+    bool is_hovering_canvas_window(Vec2 mouse_pos) const;
+    Vec2 get_mouse_position_on_canvas(Vec2 mouse_pos);
     Vec2 get_mouse_position_on_canvas_window(Vec2 mouse_pos) const;
 };
 

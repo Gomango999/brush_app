@@ -6,13 +6,16 @@ const unsigned int SCREEN_WIDTH = 2560;
 const unsigned int SCREEN_HEIGHT = 1440;
 const unsigned int CANVAS_WIDTH = 8000;
 const unsigned int CANVAS_HEIGHT = 8000;
+const unsigned int CANVAS_DISPLAY_WIDTH = 1200;
+const unsigned int CANVAS_DISPLAY_HEIGHT = 1200;
 
 int main() {
     
     try {
         auto app = App(
-            SCREEN_WIDTH, SCREEN_HEIGHT, 
-            CANVAS_WIDTH, CANVAS_HEIGHT
+            SCREEN_WIDTH, SCREEN_HEIGHT,
+            CANVAS_WIDTH, CANVAS_HEIGHT,
+            CANVAS_DISPLAY_WIDTH, CANVAS_DISPLAY_HEIGHT
         );
 
         app.run();

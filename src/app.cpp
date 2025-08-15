@@ -18,16 +18,16 @@ App::App(
     unsigned int screen_width,
     unsigned int screen_height,
     unsigned int canvas_width,
-    unsigned int canvas_height
+    unsigned int canvas_height,
+    unsigned int canvas_display_width,
+    unsigned int canvas_display_height
 )
     : m_screen_width(screen_width),
     m_screen_height(screen_height),
     // SOMEDAY: To be removed when we implement zooming. For now we just
     // hard code the canvas's display size on the screen.
-    m_canvas_display_width(1200),
-    m_canvas_display_height(1200),
     m_window("Brush App", screen_width, screen_height),
-    m_gui(m_window.window()),
+    m_gui(m_window.window(), Vec2{ float(canvas_display_width), float(canvas_display_height) }),
     m_canvas(canvas_width, canvas_height),
     m_user_state()
 {
@@ -48,11 +48,13 @@ void App::run() {
         m_gui.define_interface(
             m_user_state,
             m_canvas,
-            debug_state,
-            m_canvas_display_width, m_canvas_display_height
+            debug_state
         );
 
-        if (glfwGetTime() - m_last_update_time > m_target_display_dt) {
+        handle_cursor();
+
+        // TODO: Think about why multiplying by 0.9 makes it feel smoother
+        if (glfwGetTime() - m_last_update_time > m_target_display_dt * 0.9) {
             render();
             m_last_update_time = glfwGetTime();
         }
@@ -116,6 +118,9 @@ void App::handle_inputs() {
         m_user_state.brush_manager.set_selected_brush_by_name("Eraser");
     }
 
+    m_user_state.prev_cursor = std::nullopt;
+    m_user_state.is_color_picking = io.KeyAlt;
+
     bool mouse_down = m_window.is_mouse_down() || m_window.is_pen_down();
     if (mouse_down) {
         if (io.KeyAlt) {
@@ -125,12 +130,26 @@ void App::handle_inputs() {
             }
         } else {
             apply_brush_stroke(m_user_state);
-        }
 
-        m_user_state.prev_cursor = m_user_state.cursor;
+            m_user_state.prev_cursor = m_user_state.cursor;
+        }
     }
-    else {
-        m_user_state.prev_cursor = std::nullopt;
+}
+
+void App::handle_cursor() {
+    ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+
+    // TODO: Move this into m_window
+    Vec2 mouse_pos = m_window.get_mouse_pos();
+    Vec2 pen_pos = m_window.get_pen_pos();
+    Vec2 pos = m_window.is_pen_down() ? pen_pos : mouse_pos;
+
+    if (m_gui.is_hovering_canvas(pos)) {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+
+        if (m_user_state.is_color_picking) {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+        }
     }
 }
 
@@ -159,17 +178,12 @@ Vec2 App::get_cursor_position_on_canvas() {
     Vec2 pen_pos = m_window.get_pen_pos();
     Vec2 pos = m_window.is_pen_down() ? pen_pos : mouse_pos;
 
-    Vec2 pos_on_canvas_window =
-        m_gui.get_mouse_position_on_canvas_window(pos);
-
-    // SOMEDAY: When zoom is added, replace this calculation with something more
-    // sophisticated.
-    Vec2 pos_on_canvas{
-        pos_on_canvas_window.x() / m_canvas_display_width * m_canvas.width(),
-        pos_on_canvas_window.y() / m_canvas_display_height * m_canvas.width()
+    Vec2 normalised_canvas_pos = m_gui.get_mouse_position_on_canvas(pos);
+    Vec2 canvas_pos = Vec2{
+        normalised_canvas_pos.x() * m_canvas.width(),
+        normalised_canvas_pos.y() * m_canvas.height()
     };
-
-    return pos_on_canvas;
+    return canvas_pos;
 }
 
 DebugState App::generate_debug_state() {

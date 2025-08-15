@@ -18,7 +18,7 @@
 #include "user_state.h"
 #include "vec.h"
 
-GUI::GUI(GLFWwindow* window) {
+GUI::GUI(GLFWwindow* window, Vec2 canvas_size) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -27,6 +27,8 @@ GUI::GUI(GLFWwindow* window) {
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);     
     ImGui_ImplOpenGL3_Init("#version 430 core");
+
+    m_canvas_display_size = canvas_size;
 }
 
 GUI::~GUI() {
@@ -50,11 +52,9 @@ static void imgui_formatted_label_text(const char* label, const char* fmt, ...) 
 }
 
 void GUI::define_interface(
-    UserState& user_state, 
-    Canvas& canvas, 
-    DebugState debug_state, 
-    size_t canvas_display_width, 
-    size_t canvas_display_height
+    UserState& user_state,
+    Canvas& canvas,
+    DebugState debug_state
 ) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -64,7 +64,7 @@ void GUI::define_interface(
     define_color_picker_window(user_state.selected_color);
     define_brush_window(user_state.brush_manager);
     define_brush_properties_window(user_state.brush_manager);
-    define_canvas_window(canvas, canvas_display_width, canvas_display_height);
+    define_canvas_window(canvas);
     define_debug_window(debug_state, user_state);
     define_error_popup();
     define_layer_window(canvas, user_state.selected_layer);
@@ -112,16 +112,17 @@ void GUI::define_brush_properties_window(BrushManager& brush_manager) {
 }
 
 
-void GUI::define_canvas_window(Canvas& canvas, size_t canvas_display_width, size_t canvas_display_height) {
+void GUI::define_canvas_window(Canvas& canvas) {
     ImGuiWindowFlags window_flags = 0;
     window_flags |= ImGuiWindowFlags_NoTitleBar;
     ImGui::Begin("Canvas", nullptr, window_flags);
 
     m_canvas_window_pos = Vec<2>::from_ImVec2(ImGui::GetCursorScreenPos());
+    m_canvas_window_size = Vec<2>::from_ImVec2(ImGui::GetContentRegionAvail());
 
     ImGui::Image(
         (ImTextureID)canvas.output_texture(),
-        ImVec2(canvas_display_width, canvas_display_height)
+        m_canvas_display_size.to_ImVec2()
     );
     ImGui::End();
 }
@@ -227,6 +228,30 @@ void GUI::define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_l
 
     }
     ImGui::EndChild();
+}
+
+bool GUI::is_hovering_canvas(Vec2 mouse_pos) const {
+    Vec2 top_left = m_canvas_window_pos;
+    Vec2 bottom_right = m_canvas_window_pos + m_canvas_display_size;
+    return mouse_pos.x() >= top_left.x() && mouse_pos.x() < bottom_right.x()
+        && mouse_pos.y() >= top_left.y() && mouse_pos.y() < bottom_right.y();
+}
+
+bool GUI::is_hovering_canvas_window(Vec2 mouse_pos) const {
+    Vec2 top_left = m_canvas_window_pos;
+    Vec2 bottom_right = m_canvas_window_pos + m_canvas_window_size;
+    return mouse_pos.x() >= top_left.x() && mouse_pos.x() < bottom_right.x()
+        && mouse_pos.y() >= top_left.y() && mouse_pos.y() < bottom_right.y();
+}
+
+// Returns canvas coordinates in the range [0..1]
+Vec2 GUI::get_mouse_position_on_canvas(Vec2 mouse_pos) {
+    Vec2 canvas_window_pos = get_mouse_position_on_canvas_window(mouse_pos);
+    Vec2 pos_on_canvas {
+      canvas_window_pos.x() / m_canvas_display_size.x(),
+      canvas_window_pos.y() / m_canvas_display_size.y()
+    };
+    return pos_on_canvas;
 }
 
 Vec2 GUI::get_mouse_position_on_canvas_window(Vec2 mouse_pos) const {

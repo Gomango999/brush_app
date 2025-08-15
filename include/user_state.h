@@ -28,10 +28,13 @@ struct UserState {
     CursorState cursor;
     std::optional<CursorState> prev_cursor;
 
+    bool is_color_picking;
+
     UserState() : brush_manager() {
         selected_color = Vec3{ 0.0, 0.0, 0.0 };
         selected_layer = std::nullopt;
         cursor = CursorState();
         prev_cursor = std::nullopt;
+        is_color_picking = false;
     };
 };
