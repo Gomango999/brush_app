@@ -116,7 +116,7 @@ void App::handle_inputs() {
         m_user_state.brush_manager.set_selected_brush_by_name("Eraser");
     }
 
-    m_user_state.prev_cursor = std::nullopt;
+    bool is_drawing = false;
     m_user_state.is_color_picking = io.KeyAlt;
 
     if (m_window.is_mouse_down()) {
@@ -127,9 +127,14 @@ void App::handle_inputs() {
             }
         } else {
             apply_brush_stroke(m_user_state);
-
-            m_user_state.prev_cursor = m_user_state.cursor;
+            is_drawing = true;
         }
+    }
+    
+    if (is_drawing) {
+        m_user_state.prev_cursor = m_user_state.cursor;
+    } else {
+        m_user_state.prev_cursor = std::nullopt;
     }
 }
 

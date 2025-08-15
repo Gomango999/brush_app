@@ -174,7 +174,10 @@ void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, 
 
 void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState start, CursorState end, Vec3 color) {
     float dist = (start.pos - end.pos).len();
-    int num_segments = int(dist / brush.size()) * 8;
+    float min_pressure = std::min(start.pressure, end.pressure);
+    float min_size = brush.size() * min_pressure;
+
+    int num_segments = int(dist / min_size) * 8;
     num_segments = std::max(1, num_segments);
     // BUG: Having too high num_segments too high (~16) creates strange square artifacts
     // which I suspect has something to do with the tile size of sparse textures. I've
