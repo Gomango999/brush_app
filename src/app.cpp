@@ -44,17 +44,18 @@ void App::run() {
 
         handle_inputs();
 
-        DebugState debug_state = generate_debug_state();
-        m_gui.define_interface(
-            m_user_state,
-            m_canvas,
-            debug_state
-        );
-
-        handle_cursor();
-
         // TODO: Think about why multiplying by 0.9 makes it feel smoother
         if (glfwGetTime() - m_last_update_time > m_target_display_dt * 0.9) {
+            DebugState debug_state = generate_debug_state();
+
+            m_gui.define_interface(
+                m_user_state,
+                m_canvas,
+                debug_state
+            );
+
+            handle_cursor();
+
             render();
             m_last_update_time = glfwGetTime();
         }
