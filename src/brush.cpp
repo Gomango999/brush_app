@@ -85,7 +85,7 @@ void Brush::decrease_size() {
 
 void Brush::increase_size() {
     auto it = std::upper_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), m_size);
-    if (it == BRUSH_SIZES.begin()) m_size = MAX_BRUSH_SIZE;
+    if (it == BRUSH_SIZES.end()) m_size = MAX_BRUSH_SIZE;
     else m_size = *it;
 }
 
