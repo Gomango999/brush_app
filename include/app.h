@@ -30,8 +30,10 @@ private:
 
     double m_last_update_time;
     double m_last_dt;
-    const double m_target_fps = 120.0;
-    const double m_target_dt = 1.0 / m_target_fps;
+    const double m_target_internal_fps = 120.0;
+    const double m_target_internal_dt = 1.0 / m_target_internal_fps;
+    const double m_target_display_fps = 60.0;
+    const double m_target_display_dt = 1.0 / m_target_display_fps;
 
     void handle_inputs();
     void apply_brush_stroke(UserState& user_state);

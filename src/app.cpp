@@ -52,15 +52,16 @@ void App::run() {
             m_canvas_display_width, m_canvas_display_height
         );
 
-        render();
-
-        m_last_dt = glfwGetTime() - loop_start_time;
-        double time_to_wait = m_target_dt - m_last_dt;
-        if (time_to_wait > 0.0) {
-            std::this_thread::sleep_for(
-                std::chrono::duration<double>(time_to_wait)
-            );
+        if (glfwGetTime() - m_last_update_time > m_target_display_dt) {
+            render();
+            m_last_update_time = glfwGetTime();
         }
+
+        // Calling `std::this_thread::sleep_for()` has a minimum sleep time
+        // of 16ms. To achieve a higher internal framerate, we hotloop 
+        // instead.
+        while (glfwGetTime() - loop_start_time < m_target_internal_dt) {}
+        m_last_dt = glfwGetTime() - loop_start_time;
     }
 }
 

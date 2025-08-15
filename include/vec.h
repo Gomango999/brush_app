@@ -1,4 +1,5 @@
 #pragma once
+#include <cmath>
 #include <initializer_list>
 
 #include "imgui.h"
@@ -105,6 +106,12 @@ struct Vec {
     Vec<4> rgba() const {
         static_assert(N >= 4, "rgba() requires at least 4 components");
         return Vec<4>({ data[0], data[1], data[2], data[3] });
+    }
+
+    float len() {
+        float len = 0;
+        for (int i = 0; i < N; ++i) len += data[i] * data[i];
+        return sqrt(len);
     }
 
     ImVec2 to_ImVec2() const { return ImVec2(data[0], data[1]); }

@@ -36,11 +36,9 @@ public:
 
 	void draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, Vec3 color);
 	void draw_circles_on_segment(
-		Layer& layer, Brush& brush, 
-		CursorState start, CursorState end, 
-		Vec3 color, 
-		bool include_start = false, 
-		unsigned int num_segments = 8
+		Layer& layer, Brush& brush,
+		CursorState start, CursorState end,
+		Vec3 color
 	);
 
 	std::optional<Vec3> get_color_at_pos(Vec2 pos);
