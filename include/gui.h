@@ -48,7 +48,7 @@ public:
 
     bool is_hovering_canvas(Vec2 mouse_pos) const;
     bool is_hovering_canvas_window(Vec2 mouse_pos) const;
-    Vec2 get_mouse_position_on_canvas(Vec2 mouse_pos);
+    Vec2 get_normalised_mouse_pos_on_canvas(Vec2 mouse_pos);
     Vec2 get_mouse_position_on_canvas_window(Vec2 mouse_pos) const;
 };
 

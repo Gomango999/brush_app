@@ -39,7 +39,7 @@ private:
     void handle_cursor();
 
     void apply_brush_stroke(UserState& user_state);
-    Vec2 get_cursor_position_on_canvas();
+    Vec2 get_mouse_pos_on_canvas();
     DebugState generate_debug_state();
     void render();
 };

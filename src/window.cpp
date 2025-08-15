@@ -140,37 +140,4 @@ Window::~Window() {
     glfwTerminate();
 }
 
-GLFWwindow* Window::window() const {
-    return m_window;
-}
-
-WNDPROC Window::original_wnd_proc() const {
-    return m_original_wnd_proc;
-}
-
-void Window::hide_cursor() {
-    // `ShowCursor` keeps an internal count, so if it `ShowCursor(FALSE)`
-    // is called 3 times, you will need to call `ShowCursor(TRUE)` 3 times
-    // for it to show again. This is why we track an internal variable
-    // to update this.
-    if (m_windows_cursor_visible) {
-        ShowCursor(FALSE);
-        m_windows_cursor_visible = false;
-    }
-}
-
-void Window::show_cursor() {
-    if (!m_windows_cursor_visible) {
-        ShowCursor(TRUE);
-        m_windows_cursor_visible = true;
-    }
-}
-
-void Window::set_should_close(int value) {
-    glfwSetWindowShouldClose(m_window, value);
-}
-
-bool Window::should_close() {
-    return glfwWindowShouldClose(m_window);
-}
 

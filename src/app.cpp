@@ -72,10 +72,8 @@ void App::handle_inputs() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    Vec2 cursor_pos = get_cursor_position_on_canvas();
-    float pressure = m_window.is_pen_down() ?
-        m_window.get_pen_pressure() :
-        1.0;
+    Vec2 cursor_pos = get_mouse_pos_on_canvas();
+    float pressure = m_window.get_pressure();    
     m_user_state.cursor = CursorState(cursor_pos, pressure);
 
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
@@ -121,8 +119,7 @@ void App::handle_inputs() {
     m_user_state.prev_cursor = std::nullopt;
     m_user_state.is_color_picking = io.KeyAlt;
 
-    bool mouse_down = m_window.is_mouse_down() || m_window.is_pen_down();
-    if (mouse_down) {
+    if (m_window.is_mouse_down()) {
         if (io.KeyAlt) {
             std::optional<Vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
             if (color_opt.has_value()) {
@@ -139,12 +136,8 @@ void App::handle_inputs() {
 void App::handle_cursor() {
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 
-    // TODO: Move this into m_window
     Vec2 mouse_pos = m_window.get_mouse_pos();
-    Vec2 pen_pos = m_window.get_pen_pos();
-    Vec2 pos = m_window.is_pen_down() ? pen_pos : mouse_pos;
-
-    if (m_gui.is_hovering_canvas(pos)) {
+    if (m_gui.is_hovering_canvas(mouse_pos)) {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
         if (m_user_state.is_color_picking) {
@@ -173,25 +166,23 @@ void App::apply_brush_stroke(UserState& user_state) {
     }
 }
 
-Vec2 App::get_cursor_position_on_canvas() {
-    Vec2 mouse_pos = m_window.get_mouse_pos();
-    Vec2 pen_pos = m_window.get_pen_pos();
-    Vec2 pos = m_window.is_pen_down() ? pen_pos : mouse_pos;
+DebugState App::generate_debug_state() {
+    Vec2 mouse_pos = get_mouse_pos_on_canvas();
+    return DebugState{
+        m_last_dt,
+        mouse_pos
+    };
+}
 
-    Vec2 normalised_canvas_pos = m_gui.get_mouse_position_on_canvas(pos);
+Vec2 App::get_mouse_pos_on_canvas() {
+    Vec2 mouse_pos = m_window.get_mouse_pos();
+
+    Vec2 normalised_canvas_pos = m_gui.get_normalised_mouse_pos_on_canvas(mouse_pos);
     Vec2 canvas_pos = Vec2{
         normalised_canvas_pos.x() * m_canvas.width(),
         normalised_canvas_pos.y() * m_canvas.height()
     };
     return canvas_pos;
-}
-
-DebugState App::generate_debug_state() {
-    Vec2 mouse_pos = get_cursor_position_on_canvas();
-    return DebugState{
-        m_last_dt,
-        mouse_pos
-    };
 }
 
 void App::render() {

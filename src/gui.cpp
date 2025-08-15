@@ -245,7 +245,7 @@ bool GUI::is_hovering_canvas_window(Vec2 mouse_pos) const {
 }
 
 // Returns canvas coordinates in the range [0..1]
-Vec2 GUI::get_mouse_position_on_canvas(Vec2 mouse_pos) {
+Vec2 GUI::get_normalised_mouse_pos_on_canvas(Vec2 mouse_pos) {
     Vec2 canvas_window_pos = get_mouse_position_on_canvas_window(mouse_pos);
     Vec2 pos_on_canvas {
       canvas_window_pos.x() / m_canvas_display_size.x(),
