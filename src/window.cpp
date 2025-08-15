@@ -7,6 +7,7 @@
 #include <glfw/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <glfw/glfw3native.h>
+#include <imgui.h>
 
 #include "vec.h"
 #include "window.h"
@@ -37,6 +38,8 @@
 static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param) {
     Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
+    ImGuiIO& io = ImGui::GetIO();
+
     switch (msg) {
         case WM_POINTERUPDATE:
         case WM_POINTERDOWN:
@@ -52,10 +55,18 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_p
                     float(m_pen_pos.y - screen_pos.y) 
                 };
 
+                // ImGui has different behaviours depending on pen vs tablet, so we just
+                // disguise all pen tablet inputs as mouse inputs instead.
+                io.MousePos = relative_pen_pos.to_ImVec2();
+                if (msg == WM_POINTERDOWN) io.MouseDown[0] = true;
+                else if (msg == WM_POINTERUP) io.MouseDown[0] = false;
+                float pressure = pen_info.pressure / 1024.f;
+
                 window->set_pen_pos(relative_pen_pos);
                 window->set_pen_down((pen_info.pointerInfo.pointerFlags & POINTER_FLAG_INCONTACT) != 0);
-                window->set_pen_pressure(pen_info.pressure / 1024.0f);
+                window->set_pen_pressure(pen_info.pressure / 1024.f);
             }
+
             break;
         }
 
@@ -76,8 +87,8 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_p
             break;
         }
         
-        // This disables windows hold-to-right-click feature on tablets.
-        // Tapping to click still works using this method.
+        // This is called once at the creation of the window and disables windows 
+        // hold-to-right-click feature on pen tablets, among other things.
         case WM_TABLET_QUERYSYSTEMGESTURESTATUS: {
             return TABLET_DISABLE_PRESSANDHOLD |
                 TABLET_DISABLE_PENTAPFEEDBACK |
