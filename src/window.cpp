@@ -38,6 +38,10 @@
 static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_param) {
     Window* window = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
 
+    if (ImGui::GetCurrentContext() == NULL) {
+        return CallWindowProc(window->original_wnd_proc(), hwnd, msg, w_param, l_param);
+    }
+
     ImGuiIO& io = ImGui::GetIO();
 
     switch (msg) {
@@ -96,7 +100,6 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_p
                 TABLET_DISABLE_TOUCHUIFORCEON;
         }
     }
-
 
     return CallWindowProc(window->original_wnd_proc(), hwnd, msg, w_param, l_param);
 }
