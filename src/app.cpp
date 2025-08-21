@@ -1,6 +1,12 @@
 #include <chrono>
+#include <corecrt.h>
+#include <cstdlib>
+#include <ctime>
+#include <format>
+#include <iomanip>
 #include <optional>
-#include <thread>
+#include <sstream>
+#include <string>
 
 #include "glad/glad.h"
 #include "imgui.h"
@@ -118,6 +124,10 @@ void App::handle_inputs() {
         m_user_state.brush_manager.set_selected_brush_by_name("Eraser");
     }
 
+    if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
+        save_image_to_downloads();
+    }
+
     bool is_drawing = false;
     m_user_state.is_color_picking = io.KeyAlt;
 
@@ -173,6 +183,27 @@ void App::apply_brush_stroke(UserState& user_state) {
     }
 }
 
+void App::save_image_to_downloads() {
+    auto now = std::chrono::system_clock::now();
+    std::time_t t = std::chrono::system_clock::to_time_t(now);
+
+    std::tm local_time{};
+#if defined(_WIN32)
+    localtime_s(&local_time, &t);
+#else
+    localtime_r(&t, &localTime);
+#endif
+
+    std::ostringstream oss;
+    oss << std::put_time(&local_time, "%Y%m%d_%H%M%S");
+    std::string time_str = oss.str();
+
+    const char* user_profile = std::getenv("USERPROFILE");
+
+    std::string filename = std::format("{}/Downloads/brush_{}.png", user_profile, time_str);
+    m_canvas.save_as_png(filename.c_str());
+}
+
 DebugState App::generate_debug_state() {
     Vec2 mouse_pos = get_mouse_pos_on_canvas();
     return DebugState{
@@ -201,4 +232,5 @@ void App::render() {
 
     glfwSwapBuffers(m_window.window());
 }
+
 

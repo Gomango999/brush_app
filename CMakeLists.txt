@@ -7,6 +7,7 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/include"
     "${CMAKE_SOURCE_DIR}/external/imgui"
     "${CMAKE_SOURCE_DIR}/external/imgui/backends"
+    "${CMAKE_SOURCE_DIR}/external/stb"
     "C:/cpp_libs/include"
     "C:/cpp_libs/include/glad-4.3"
     "C:/cpp_libs/include/glad-4.3/glad"
@@ -26,24 +27,14 @@ file(GLOB IMGUI_SRC_ALL
     "external/imgui/backends/imgui_impl_glfw.cpp"
     "external/imgui/backends/imgui_impl_opengl3.cpp"
 )
+source_group("External\\ImGui" FILES ${IMGUI_SRC_ALL})
 
-set(IMGUI_SRC_HIDDEN
-    "external/imgui/imgui_demo.cpp"
-    "external/imgui/imgui_draw.cpp"
-    "external/imgui/imgui_tables.cpp"
-    "external/imgui/imgui_widgets.cpp"
-    "external/imgui/backends/imgui_impl_glfw.cpp"
-    "external/imgui/backends/imgui_impl_opengl3.cpp"
+file(GLOB STB_SRC_ALL
+    "external/stb/*.h"
 )
-
-list(REMOVE_ITEM IMGUI_SRC_ALL ${IMGUI_SRC_HIDDEN})
-
-source_group("ImGui" FILES ${IMGUI_SRC_ALL})
-
-source_group("External\\ImGui" FILES ${IMGUI_SRC_HIDDEN})
+source_group("External\\Stb" FILES ${STB_SRC_ALL})
 
 file(GLOB SHADER_FILES "src/shaders/*")
-
 source_group("Shaders" FILES ${SHADER_FILES})
 
 file(GLOB APP_SOURCES "src/*.cpp")
@@ -54,7 +45,7 @@ add_executable(brush_app
     ${APP_SOURCES}
     ${GLAD_SRC}
     ${IMGUI_SRC_ALL}
-    ${IMGUI_SRC_HIDDEN}
+    ${STB_SRC_ALL}
     ${HEADER_FILES}
 )
 

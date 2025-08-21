@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cstdint>
+#include <cstdio> // required for stb_image_write.h to work
 #include <exception>
 #include <functional>
 #include <iterator>
@@ -8,6 +9,8 @@
 #include <vector>
 
 #include "glad/glad.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
 
 #include "brush.h"
 #include "canvas.h"
@@ -261,6 +264,28 @@ void Canvas::render_cursor(BrushManager& brush_manager, Vec2 mouse_pos) {
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
+void Canvas::load_output_image(std::vector<uint8_t>& pixels) const {
+    glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
+    glViewport(0, 0, m_width, m_height);
+
+    pixels.resize(m_width * m_height * 4);
+    glReadPixels(
+        0, 0,
+        m_width, m_height,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        pixels.data()
+    );
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void Canvas::save_as_png(const char* filename) const {
+    std::vector<uint8_t> pixels;
+    load_output_image(pixels);
+    stbi_write_png(filename, m_width, m_height, 4, pixels.data(), m_width * 4);
 }
 
 

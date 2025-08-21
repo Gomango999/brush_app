@@ -38,9 +38,12 @@ private:
     void handle_inputs();
     void handle_cursor();
 
+    void render();
+
+    void save_image_to_downloads();
     void apply_brush_stroke(UserState& user_state);
+
     Vec2 get_mouse_pos_on_canvas();
     DebugState generate_debug_state();
-    void render();
 };
 

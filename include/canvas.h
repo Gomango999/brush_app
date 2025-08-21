@@ -1,7 +1,9 @@
 #pragma once
 
+#include <cstdint>
 #include <functional>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <glad/glad.h>
@@ -45,6 +47,8 @@ public:
 
 	void render(BrushManager& brush_manager, Vec2 mouse_pos);
 
+	void save_as_png(const char* filename) const;
+
 	size_t width() const;
 	size_t height() const;
 	const std::vector<Layer>& get_layers() const;
@@ -65,6 +69,8 @@ private:
 	void move_layer(std::optional<Layer::Id> layer_id, int delta);
 
 	void render_cursor(BrushManager& brush_manager, Vec2 mouse_pos);
+
+	void load_output_image(std::vector<uint8_t>& pixels) const;
 };
 
 
