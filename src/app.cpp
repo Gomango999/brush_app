@@ -8,7 +8,6 @@
 #include <sstream>
 #include <string>
 
-#include "glad/glad.h"
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 
@@ -17,6 +16,7 @@
 #include "app.h"
 #include "brush.h"
 #include "canvas.h"
+#include "frame_buffer.h"
 #include "gui.h"
 #include "layer.h"
 #include "user_state.h"
@@ -81,7 +81,7 @@ void App::handle_inputs() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    glm::vec2 cursor_pos = get_mouse_pos_on_canvas();
+    glm::vec2 cursor_pos = get_mouse_pos_in_canvas_window();
     float pressure = m_window.get_pressure();    
     m_user_state.cursor = CursorState(cursor_pos, pressure);
 
@@ -129,6 +129,13 @@ void App::handle_inputs() {
         save_image_to_downloads();
     }
 
+    if (ImGui::GetIO().MouseWheel > 0) {
+        // TODO: Make sure this works for other points
+        m_canvas.zoom_into_point(glm::vec2(0.0, 0.0));
+    } else if (ImGui::GetIO().MouseWheel < 0) {
+        m_canvas.zoom_out_of_point(glm::vec2(0.0, 0.0));
+    };
+
     bool is_drawing = false;
     m_user_state.is_color_picking = io.KeyAlt;
 
@@ -154,14 +161,15 @@ void App::handle_inputs() {
 void App::handle_cursor() {
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 
-    glm::vec2 mouse_pos = m_window.get_mouse_pos();
-    if (m_gui.is_hovering_canvas(mouse_pos)) {
-        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    // TODO: Fix up the cursor display
+    //glm::vec2 mouse_pos = m_window.get_mouse_pos();
+    //if (m_gui.is_hovering_canvas(mouse_pos)) {
+    //    ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
-        if (m_user_state.is_color_picking) {
-            ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-        }
-    }
+    //    if (m_user_state.is_color_picking) {
+    //        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
+    //    }
+    //}
 }
 
 void App::apply_brush_stroke(UserState& user_state) {
@@ -211,24 +219,29 @@ void App::save_image_to_downloads() {
 }
 
 DebugState App::generate_debug_state() {
-    glm::vec2 mouse_pos = get_mouse_pos_on_canvas();
+    glm::vec2 mouse_pos = get_mouse_pos_in_canvas_window();
+    glm::vec2 canvas_pos = m_canvas.screen_space_to_world_space(mouse_pos);
     return DebugState{
         m_last_dt,
-        mouse_pos
+        mouse_pos,
+        canvas_pos
     };
 }
 
-glm::vec2 App::get_mouse_pos_on_canvas() {
+glm::vec2 App::get_mouse_pos_in_canvas_window() {
     glm::vec2 mouse_pos = m_window.get_mouse_pos();
-    glm::vec2 normalised_canvas_pos = m_gui.get_normalised_mouse_pos_on_canvas(mouse_pos);
-    glm::vec2 canvas_pos = normalised_canvas_pos * m_canvas.size();
-    return canvas_pos;
+    glm::vec2 screen_pos = m_gui.get_mouse_position_on_canvas_window(mouse_pos);
+    return screen_pos;
 }
 
 void App::render() {
-    m_canvas.render(m_user_state.brush_manager, m_user_state.cursor.pos);
+    m_canvas.render(
+        m_gui.canvas_window_size(), 
+        m_user_state.brush_manager, 
+        m_user_state.cursor.pos
+    );
+    FrameBuffer::unbind();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

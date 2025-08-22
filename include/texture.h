@@ -9,7 +9,7 @@ class Texture2D {
     const GLuint mip_map_level = 0;
 
 public:
-    Texture2D(GLsizei width, GLsizei height) {
+    Texture2D(size_t width, size_t height) {
         glGenTextures(1, &m_id);
         if (m_id == 0) {
             throw std::runtime_error("Failed to generate OpenGL texture!");
@@ -20,7 +20,7 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        assign_texture(m_width, m_height);
+        assign_texture(width, height);
     }
 
     ~Texture2D() {
@@ -53,7 +53,7 @@ public:
         glBindTexture(GL_TEXTURE_2D, m_id);
     }
 
-    void unbind() const {
+    static void unbind() {
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
@@ -66,7 +66,7 @@ public:
         bind();
     }
 
-    void assign_texture(GLsizei width, GLsizei height) {
+    void assign_texture(size_t width, size_t height) {
         m_width = width;
         m_height = height;
         glTexImage2D(
@@ -80,18 +80,18 @@ public:
         );
     }
 
-    void resize(GLsizei width, GLsizei height) {
+    void resize(size_t width, size_t height) {
         if (width != m_width || height != m_height) {
             assign_texture(width, height);
         }
     }
 
     GLuint id() const { return m_id; }
-    GLsizei width() const { return m_width; }
-    GLsizei height() const { return m_height; }
+    size_t width() const { return m_width; }
+    size_t height() const { return m_height; }
     glm::vec2 size() const { return glm::vec2(m_width, m_height); }
 
 private:
-    GLsizei m_width, m_height;
+    size_t m_width, m_height;
     GLuint m_id = 0;
 };

@@ -45,7 +45,7 @@ private:
     void save_image_to_downloads();
     void apply_brush_stroke(UserState& user_state);
 
-    glm::vec2 get_mouse_pos_on_canvas();
+    glm::vec2 get_mouse_pos_in_canvas_window();
     DebugState generate_debug_state();
 };
 

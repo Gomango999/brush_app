@@ -16,7 +16,6 @@
 
 Layer::Layer(size_t width, size_t height)
     : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
-    m_gpu_texture(width, height),
     m_frame_buffer(width, height)
 {
     static Id current_id = 0;
@@ -27,14 +26,10 @@ Layer::Layer(size_t width, size_t height)
 
     m_is_visible = true;
     m_is_alpha_locked = false;
-
-    m_frame_buffer.bind();
-    m_frame_buffer.attach_texture_to_color_output(m_gpu_texture);
 }
 
 Layer::Layer(Layer&& other) noexcept
-    : m_gpu_texture(std::move(other.m_gpu_texture)),
-    m_frame_buffer(std::move(other.m_frame_buffer)),
+    : m_frame_buffer(std::move(other.m_frame_buffer)),
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
@@ -44,7 +39,6 @@ Layer::Layer(Layer&& other) noexcept
 
 Layer& Layer::operator=(Layer&& other) noexcept {
     if (this != &other) {
-        m_gpu_texture = std::move(other.m_gpu_texture);
         m_frame_buffer = std::move(other.m_frame_buffer);
         m_id = other.m_id;
         m_name = std::move(other.m_name);
@@ -60,7 +54,7 @@ void Layer::draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, g
     m_frame_buffer.set_viewport();
 
     brush.draw_at_point(
-        glm::vec2(m_gpu_texture.width(), m_gpu_texture.height()),
+        m_frame_buffer.size(),
         mouse_pos, 
         pressure,
         color, 
@@ -76,7 +70,7 @@ void Layer::render() {
     if (!m_is_visible) return;
 
     m_quad_program.use();
-    m_gpu_texture.bind_to_0();
+    m_frame_buffer.texture().bind_to_0();
     m_quad_program.set_uniform_1i("u_texture", 0);
 
     GLuint dummy_vao = VAO::get_dummy();

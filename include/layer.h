@@ -23,7 +23,6 @@ private:
     bool m_is_visible;
     bool m_is_alpha_locked;
 
-    Texture2D m_gpu_texture;
     FrameBuffer m_frame_buffer;
 
     Program m_quad_program;
@@ -50,8 +49,8 @@ public:
     bool is_alpha_locked() const { return m_is_alpha_locked; }
     void set_alpha_lock(bool locked) { m_is_alpha_locked = locked; }
 
-    size_t width() const { return m_gpu_texture.width(); }
-    size_t height() const { return m_gpu_texture.height(); }
+    size_t width() const { return m_frame_buffer.width(); }
+    size_t height() const { return m_frame_buffer.height(); }
 
-    const Texture2D& gpu_texture() const { return m_gpu_texture; }
+    const Texture2D& gpu_texture() const { return m_frame_buffer.texture(); }
 };

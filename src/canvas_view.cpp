@@ -3,26 +3,82 @@
 #include <glad.h>
 #include <glm/glm.hpp>
 
+
 #include "canvas_view.h"
 #include "frame_buffer.h"
 #include "texture.h"
 #include "vao.h"
 
-CanvasView::CanvasView(size_t window_width, size_t window_height) :
-    m_texture(window_width, window_height),
-    m_frame_buffer(m_texture.width(), m_texture.height()),
+static glm::vec4 canvas_bg_color = glm::vec4(0.0, 0.0, 0.0, 1.0f);
+
+// Initially we don't know the window size, but we need to define
+// a non-zero texture for the frame buffer. These will later be 
+// resized on every frame to account for the window size.
+static size_t INITIAL_WINDOW_WIDTH = 100;
+static size_t INITIAL_WINDOW_HEIGHT = 100;
+
+CanvasView::CanvasView(size_t canvas_width, size_t canvas_height):
+    m_frame_buffer(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT),
     m_program("../src/shaders/canvas_view.vert", "../src/shaders/canvas_view.frag")
 {
+    m_canvas_width = canvas_width;
+    m_canvas_height = canvas_height;
+
     m_scale = 1.0;
     m_rotation = 0.0;
     m_translation = glm::vec2(0.0, 0.0);
 }
 
-void CanvasView::render(const Texture2D& canvas) {
+// TODO: Move these into a helper header 
+inline glm::mat3 translate_mat3(const glm::vec2& t) {
+    glm::mat3 m(1.0f);
+    m[2] = glm::vec3(t, 1.0f);
+    return m;
+}
+
+static inline glm::mat3 scale_mat3(float s) {
+    glm::mat3 m(1.0f);
+    m[0][0] = s;
+    m[1][1] = s;
+    return m;
+}
+
+static inline glm::mat3 scale_mat3(float sx, float sy) {
+    glm::mat3 m(1.0f);
+    m[0][0] = sx;
+    m[1][1] = sy;
+    return m;
+}
+
+static inline glm::mat3 rotate_mat3(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+
+    glm::mat3 m(1.0f);
+    m[0][0] = c;  m[0][1] = -s;
+    m[1][0] = s;  m[1][1] = c;
+    return m;
+}
+
+// Fits the canvas within the screen dimensions, whilst keeping the aspect ratio.
+// Returns the fitted canvas size.
+static glm::vec2 fit_canvas_to_screen(glm::vec2 screen_size, glm::vec2 canvas_size) {
+    float canvas_aspect = float(canvas_size.x) / float(canvas_size.y);
+    float screen_aspect = float(screen_size.x) / float(screen_size.y);
+
+    if (screen_aspect > canvas_aspect) {
+        return glm::vec2(screen_size.y * canvas_aspect, screen_size.y);
+    } else {
+        return glm::vec2(screen_size.x, screen_size.x / canvas_aspect);
+    }
+}
+
+void CanvasView::render(glm::vec2 screen_size, const Texture2D& canvas) {
+    m_frame_buffer.resize(screen_size.x, screen_size.y);
+
     m_frame_buffer.bind();
     m_frame_buffer.set_viewport();
-    const glm::vec4 black = glm::vec4(0.0, 0.0, 0.0, 1.0f);
-    m_frame_buffer.clear(black);
+    m_frame_buffer.clear(canvas_bg_color);
 
     glm::mat3 transform = get_transform();
 
@@ -36,14 +92,46 @@ void CanvasView::render(const Texture2D& canvas) {
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLES, 0, 6);
 
-    glBindVertexArray(0);
-    canvas.unbind();
-    m_frame_buffer.unbind();
+    VAO::unbind();
+    Texture2D::unbind();
+    FrameBuffer::unbind();
 }
 
+// Transforms from NDC coordinates of full screen into NDC coordinates of 
+// screen space where canvas should render.
+// Order of operations: scale (aspect_ratio) -> scale (zoom) -> rotate -> translate
 glm::mat3 CanvasView::get_transform() const {
-    // Canonical order: Scale -> Rotate -> Translate
-    return translation_mat() * rotation_mat() * scale_mat();
+    glm::vec2 default_canvas_size = fit_canvas_to_screen(m_frame_buffer.size(), glm::vec2(m_canvas_height, m_canvas_height));
+    glm::mat3 screen_to_default = scale_mat3(
+        default_canvas_size.x / m_frame_buffer.width(),
+        default_canvas_size.y / m_frame_buffer.height()
+    );
+    return translate_mat3(m_translation) * rotate_mat3(m_rotation) * scale_mat3(m_scale) * screen_to_default;
+}
+
+glm::vec2 CanvasView::screen_space_to_world_space(glm::vec2 point) const {
+    glm::vec3 screen_ndc = glm::vec3(
+        ((point.x / m_frame_buffer.size().x) * 2.0f - 1.0f),
+        -((point.y / m_frame_buffer.size().y) * 2.0f - 1.0f),
+        1.0f
+    );
+
+    // We compare our point in screen space NDC to the bottom left and
+    // top right corners of the canvas in screen space NDC. We use this
+    // to generate a value between [0..1] in `canvas_normalised`
+
+    glm::mat3 transform = get_transform();
+    glm::vec3 canvas_bottom_left_ndc = transform * glm::vec3(-1.0, -1.0, 1.0);
+    glm::vec3 canvas_top_right_ndc = transform * glm::vec3(1.0, 1.0, 1.0);
+
+    glm::vec3 canvas_normalised = (screen_ndc - canvas_bottom_left_ndc)
+        / (canvas_top_right_ndc - canvas_bottom_left_ndc);
+
+    glm::vec2 world_pos = glm::vec2(
+        canvas_normalised.x * m_canvas_width,
+        (1.0f - canvas_normalised.y) * m_canvas_height
+    );
+    return world_pos;
 }
 
 // Zooms into a point defined in screen-space.
@@ -89,35 +177,9 @@ void CanvasView::flip() {
     m_translation = -m_translation;
 }
 
-glm::mat3 CanvasView::translation_mat() const {
-    glm::mat3 mat(1.0f);
-    mat[2] = glm::vec3(m_translation, 1.0f);
-    return mat;
-}
 
-glm::mat3 CanvasView::scale_mat() const {
-    glm::mat3 mat(1.0f);
-    mat[0][0] = m_scale;
-    mat[1][1] = m_scale;
-    return mat;
-}
 
-glm::mat3 CanvasView::rotation_mat() const {
-    glm::mat3 mat(1.0f);
-    float c = cos(m_rotation);
-    float s = sin(m_rotation);
 
-    mat[0][0] = c;  mat[0][1] = -s;
-    mat[1][0] = s;  mat[1][1] = c;
-    return mat;
-}
-
-void CanvasView::resize(size_t width, size_t height) {
-    m_texture.bind();
-    m_texture.resize(width, height);
-    m_frame_buffer.bind();
-    m_frame_buffer.attach_texture_to_color_output(m_texture);
-}
 
 
 

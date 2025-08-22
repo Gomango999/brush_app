@@ -13,6 +13,7 @@
 struct DebugState {
     double dt;
     glm::vec2 mouse_pos;
+    glm::vec2 canvas_pos;
 };
 
 // GUI class responsible for defining the interface layout in Dear ImGui.
@@ -48,7 +49,8 @@ public:
 
     bool is_hovering_canvas(glm::vec2 mouse_pos) const;
     bool is_hovering_canvas_window(glm::vec2 mouse_pos) const;
-    glm::vec2 get_normalised_mouse_pos_on_canvas(glm::vec2 mouse_pos);
     glm::vec2 get_mouse_position_on_canvas_window(glm::vec2 mouse_pos) const;
+    glm::vec2 canvas_window_pos() const { return m_canvas_window_pos; };
+    glm::vec2 canvas_window_size() const { return m_canvas_window_size; };
 };
 

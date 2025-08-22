@@ -124,8 +124,9 @@ void GUI::define_canvas_window(Canvas& canvas) {
     m_canvas_window_size = to_glm(ImGui::GetContentRegionAvail());
 
     ImGui::Image(
-        (ImTextureID)canvas.output_texture().id(),
-        to_imvec(m_canvas_display_size)
+        (ImTextureID)canvas.screen_texture().id(),
+        //(ImTextureID)canvas.output_texture().id(),
+        to_imvec(m_canvas_window_size)
     );
     ImGui::End();
 }
@@ -135,6 +136,7 @@ void GUI::define_debug_window(DebugState& debug_state, UserState& user_state) {
     imgui_formatted_label_text("dt", "%.9f", debug_state.dt);
     imgui_formatted_label_text("fps", "%.9f", 1.0 / debug_state.dt);
     imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x), int(debug_state.mouse_pos.y));
+    imgui_formatted_label_text("canvas position", "(%d, %d)", int(debug_state.canvas_pos.x), int(debug_state.canvas_pos.y));
     imgui_formatted_label_text("selected layer", "%d", user_state.selected_layer.has_value() ? user_state.selected_layer.value() : -1);
     ImGui::End();
 }
@@ -245,16 +247,6 @@ bool GUI::is_hovering_canvas_window(glm::vec2 mouse_pos) const {
     glm::vec2 bottom_right = m_canvas_window_pos + m_canvas_window_size;
     return mouse_pos.x >= top_left.x && mouse_pos.x < bottom_right.x
         && mouse_pos.y >= top_left.y && mouse_pos.y < bottom_right.y;
-}
-
-// Returns canvas coordinates in the range [0..1]
-glm::vec2 GUI::get_normalised_mouse_pos_on_canvas(glm::vec2 mouse_pos) {
-    glm::vec2 canvas_window_pos = get_mouse_position_on_canvas_window(mouse_pos);
-    glm::vec2 pos_on_canvas {
-      canvas_window_pos.x / m_canvas_display_size.x,
-      canvas_window_pos.y / m_canvas_display_size.y
-    };
-    return pos_on_canvas;
 }
 
 glm::vec2 GUI::get_mouse_position_on_canvas_window(glm::vec2 mouse_pos) const {

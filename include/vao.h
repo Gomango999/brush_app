@@ -17,4 +17,8 @@ public:
         }
         return dummy_vao;
 	}
+
+    static void unbind() {
+        glBindVertexArray(0);
+    }
 };

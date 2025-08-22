@@ -15,6 +15,7 @@
 
 #include "brush.h"
 #include "canvas.h"
+#include "frame_buffer.h"
 #include "layer.h"
 #include "program.h"
 
@@ -22,13 +23,10 @@ const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
 
 Canvas::Canvas(size_t width, size_t height)
-    : m_output_texture(width, height),
-    m_output_frame_buffer(width, height)
+    : m_output_frame_buffer(width, height),
+    m_canvas_view(m_output_frame_buffer.width(), m_output_frame_buffer.height())
 {
     m_base_color = glm::vec3( 1.0, 1.0, 1.0 );
-
-    m_output_frame_buffer.bind();
-    m_output_frame_buffer.attach_texture_to_color_output(m_output_texture);
 
     m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
 }
@@ -150,7 +148,8 @@ void Canvas::set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked) {
 }
 
 void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, glm::vec3 color) {
-    layer.draw_with_brush(brush, cursor.pos, cursor.pressure, color);
+    glm::vec2 canvas_pos = m_canvas_view.screen_space_to_world_space(cursor.pos);
+    layer.draw_with_brush(brush, canvas_pos, cursor.pressure, color);
 }
 
 void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState start, CursorState end, glm::vec3 color) {
@@ -187,7 +186,7 @@ GLuint Canvas::get_dummy_vao() const {
 }
 
 // Combines all the layers together in a single framebuffer.
-void Canvas::render(BrushManager& brush_manager, glm::vec2 mouse_pos) {
+void Canvas::render(glm::vec2 screen_area, BrushManager& brush_manager, glm::vec2 mouse_pos) {
     m_output_frame_buffer.bind();
     m_output_frame_buffer.set_viewport();
 
@@ -200,14 +199,14 @@ void Canvas::render(BrushManager& brush_manager, glm::vec2 mouse_pos) {
         layer.render();
     }
     
-
+    m_canvas_view.render(screen_area, m_output_frame_buffer.texture());
 
     // TODO: Temporarily disabled. 
     //render_cursor(brush_manager, mouse_pos);
 
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.
-    m_output_frame_buffer.unbind();
+    FrameBuffer::unbind();
 }
 
 // TODO: Eventually, this call should be deferred to the brush itself.
@@ -216,10 +215,12 @@ void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
     if (!brush_opt.has_value()) return;
     Brush& brush = brush_opt.value();
 
+    const Texture2D& output_texture = m_output_frame_buffer.texture();
+
     m_cursor_program.use();
-    m_output_texture.bind_to_0();
+    output_texture.bind_to_0();
     m_cursor_program.set_uniform_1i("u_texture", 0);
-    m_cursor_program.set_uniform_2f("u_tex_dim", m_output_texture.size());
+    m_cursor_program.set_uniform_2f("u_tex_dim", output_texture.size());
     m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
     m_cursor_program.set_uniform_1f("u_radius", brush.size());
 

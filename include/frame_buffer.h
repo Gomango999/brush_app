@@ -14,17 +14,17 @@
 
 class FrameBuffer {
     GLuint m_id = 0;
-    GLsizei m_width = 0;
-    GLsizei m_height = 0;
+    Texture2D m_texture;
 
 public:
-    FrameBuffer(GLsizei width, GLsizei height)
-        : m_width(width), m_height(height)
-    {
+    FrameBuffer(size_t width, size_t height) : m_texture(width, height) {
         glGenFramebuffers(1, &m_id);
         if (m_id == 0) {
             throw std::runtime_error("Failed to generate framebuffer");
         }
+
+        bind();
+        reattach_texture();
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -43,9 +43,8 @@ public:
 
     FrameBuffer(FrameBuffer&& other) noexcept
         : m_id(std::exchange(other.m_id, 0)),
-        m_width(std::exchange(other.m_width, 0)),
-        m_height(std::exchange(other.m_height, 0)) {
-    }
+        m_texture(std::move(other.m_texture)) 
+    {}
 
     FrameBuffer& operator=(FrameBuffer&& other) noexcept {
         if (this != &other) {
@@ -53,8 +52,7 @@ public:
                 glDeleteFramebuffers(1, &m_id);
             }
             m_id = std::exchange(other.m_id, 0);
-            m_width = std::exchange(other.m_width, 0);
-            m_height = std::exchange(other.m_height, 0);
+            m_texture = std::move(other.m_texture);
         }
         return *this;
     }
@@ -67,17 +65,13 @@ public:
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void attach_texture_to_color_output(const Texture2D& texture) {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id(), 0);
-    }
-
     void set_viewport() const {
-        glViewport(0, 0, m_width, m_height);
+        glViewport(0, 0, width(), height());
     }
 
     std::optional<glm::vec3> get_color_at_pos(glm::vec2 point) {
-        if (point.x < 0 || point.x >= m_width ||
-            point.y < 0 || point.y >= m_height) {
+        if (point.x < 0 || point.x >= width() ||
+            point.y < 0 || point.y >= height()) {
             return std::nullopt;
         }
 
@@ -100,10 +94,10 @@ public:
     void get_pixel_data(std::vector<uint8_t>& pixels) const {
         bind();
 
-        pixels.resize(m_width * m_height * 4);
+        pixels.resize(width() * height() * 4);
         glReadPixels(
             0, 0,
-            m_width, m_height,
+            width(), height(),
             GL_RGBA,
             GL_UNSIGNED_BYTE,
             pixels.data()
@@ -112,9 +106,25 @@ public:
         unbind();
     }
 
+    void reattach_texture() {
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture.id(), 0);
+    }
+
+    void resize(size_t width, size_t height) {
+        if (width == m_texture.width() && height == m_texture.height()) return;
+
+        m_texture.bind();
+        m_texture.resize(width, height);
+
+        bind();
+        reattach_texture();
+    }
+
     GLuint id() const { return m_id; }
-    GLsizei width() const { return m_width; }
-    GLsizei height() const { return m_height; }
-    glm::vec2 size() const { return glm::vec2(m_width, m_height); }
+    const Texture2D& texture() const { return m_texture; }
+    GLuint texture_id() const { return m_texture.id(); }
+    size_t width() const { return m_texture.width(); }
+    size_t height() const { return m_texture.height(); }
+    glm::vec2 size() const { return glm::vec2(width(), height()); }
 
 };
