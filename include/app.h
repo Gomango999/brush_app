@@ -41,6 +41,7 @@ private:
 
     void render();
 
+    std::string get_new_image_filename();
     void save_image_to_downloads();
     void apply_brush_stroke(UserState& user_state);
 

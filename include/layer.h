@@ -5,6 +5,7 @@
 #include "glm/glm.hpp"
 
 #include "brush.h"
+#include "frame_buffer.h"
 #include "program.h"
 #include "texture.h"
 
@@ -23,7 +24,7 @@ private:
     bool m_is_alpha_locked;
 
     Texture2D m_gpu_texture;
-    GLuint m_fbo;
+    FrameBuffer m_frame_buffer;
 
     Program m_quad_program;
 

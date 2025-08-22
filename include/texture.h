@@ -3,10 +3,11 @@
 #include <utility>      
 
 #include <glad/glad.h>  
+#include <glm/glm.hpp>
 
 class Texture2D {
 public:
-    Texture2D(size_t width, size_t height) {
+    Texture2D(GLsizei width, GLsizei height) {
         m_width = width;
         m_height = height;
 
@@ -40,8 +41,8 @@ public:
     Texture2D& operator=(const Texture2D&) = delete;
 
     Texture2D(Texture2D&& other) noexcept
-        : m_width(other.m_width),
-        m_height(other.m_height),
+        : m_width(std::exchange(other.m_width, 0)),
+        m_height(std::exchange(other.m_height, 0)),
         m_id(std::exchange(other.m_id, 0)) {}
 
     Texture2D& operator=(Texture2D&& other) noexcept {
@@ -50,8 +51,8 @@ public:
                 glDeleteTextures(1, &m_id);
             }
             m_id = std::exchange(other.m_id, 0);
-            m_width = other.m_width;
-            m_height = other.m_height;
+            m_width = std::exchange(other.m_width, 0);
+            m_height = std::exchange(other.m_height, 0);
         }
         return *this;
     }
@@ -74,10 +75,11 @@ public:
     }
 
     GLuint id() const { return m_id; }
-    size_t width() const { return m_width; }
-    size_t height() const { return m_height; }
+    GLsizei width() const { return m_width; }
+    GLsizei height() const { return m_height; }
+    glm::vec2 size() const { return glm::vec2(m_width, m_height); }
 
 private:
-    size_t m_width, m_height;
+    GLsizei m_width, m_height;
     GLuint m_id = 0;
 };

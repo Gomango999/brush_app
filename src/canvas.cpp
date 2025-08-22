@@ -22,26 +22,15 @@ const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
 
 Canvas::Canvas(size_t width, size_t height)
-    : m_output_texture(width, height) 
+    : m_output_texture(width, height),
+    m_output_frame_buffer(width, height)
 {
-    m_width = width;
-    m_height = height;
-
     m_base_color = glm::vec3( 1.0, 1.0, 1.0 );
 
-    glGenFramebuffers(1, &m_output_fbo);
-    glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_output_texture.id(), 0);
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        throw std::exception("Could not set up framebuffer");
-    }
+    m_output_frame_buffer.bind();
+    m_output_frame_buffer.attach_texture_to_color_output(m_output_texture);
 
     m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
-}
-
-Canvas::~Canvas() {
-    if (m_output_fbo != 0) glDeleteFramebuffers(1, &m_output_fbo);
 }
 
 Layer::Id Canvas::insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer) {
@@ -54,7 +43,7 @@ Layer::Id Canvas::insert_new_layer_above_selected(std::optional<Layer::Id> selec
             return layer.id() == target_layer_id;
         });
 
-    Layer new_layer = Layer(m_width, m_height);
+    Layer new_layer = Layer(width(), height());
     Layer::Id new_layer_id = new_layer.id();
 
     if (insert_position == m_layers.end()) {
@@ -183,20 +172,7 @@ void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState sta
 }
 
 std::optional<glm::vec3> Canvas::get_color_at_pos(glm::vec2 point) {
-    if (point.x < 0 || point.x >= m_width ||
-        point.y < 0 || point.y >= m_height) {
-        return std::nullopt;
-    }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
-
-    uint8_t pixel[4];
-    glReadPixels(int(point.x), int(point.y), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel);
-    glm::vec3 color = glm::vec3{ float(pixel[0] / 255.0), float(pixel[1] / 255.0), float(pixel[2] / 255.0) };
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    return color;
+    return m_output_frame_buffer.get_color_at_pos(point);
 }
 
 GLuint Canvas::get_dummy_vao() const {
@@ -212,13 +188,13 @@ GLuint Canvas::get_dummy_vao() const {
 
 // Combines all the layers together in a single framebuffer.
 void Canvas::render(BrushManager& brush_manager, glm::vec2 mouse_pos) {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
-    glViewport(0, 0, m_width, m_height);
+    m_output_frame_buffer.bind();
+    m_output_frame_buffer.set_viewport();
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glClearColor(m_base_color.r, m_base_color.g, m_base_color.b, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    m_output_frame_buffer.clear(glm::vec4(m_base_color, 1.0));
 
     for (Layer& layer : m_layers) {
         layer.render();
@@ -228,7 +204,7 @@ void Canvas::render(BrushManager& brush_manager, glm::vec2 mouse_pos) {
 
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    m_output_frame_buffer.unbind();
 }
 
 // TODO: Eventually, this call should be deferred to the brush itself.
@@ -240,7 +216,7 @@ void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
     m_cursor_program.use();
     m_output_texture.bind_to_0();
     m_cursor_program.set_uniform_1i("u_texture", 0);
-    m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
+    m_cursor_program.set_uniform_2f("u_tex_dim", m_output_texture.size());
     m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
     m_cursor_program.set_uniform_1f("u_radius", brush.size());
 
@@ -249,42 +225,10 @@ void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-void Canvas::load_output_image(std::vector<uint8_t>& pixels) const {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
-    glViewport(0, 0, m_width, m_height);
-
-    pixels.resize(m_width * m_height * 4);
-    glReadPixels(
-        0, 0,
-        m_width, m_height,
-        GL_RGBA,
-        GL_UNSIGNED_BYTE,
-        pixels.data()
-    );
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 void Canvas::save_as_png(const char* filename) const {
     std::vector<uint8_t> pixels;
-    load_output_image(pixels);
-    stbi_write_png(filename, m_width, m_height, 4, pixels.data(), m_width * 4);
+    m_output_frame_buffer.get_pixel_data(pixels);
+    stbi_write_png(filename, width(), height(), 4, pixels.data(), width() * 4);
 }
 
-
-size_t Canvas::width() const {
-    return m_width;
-}
-
-size_t Canvas::height() const {
-    return m_height;
-}
-
-const std::vector<Layer>& Canvas::get_layers() const {
-    return m_layers;
-}
-
-const Texture2D& Canvas::output_texture() const {
-    return m_output_texture;
-}
 

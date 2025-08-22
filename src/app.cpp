@@ -34,7 +34,7 @@ App::App(
     // SOMEDAY: To be removed when we implement zooming. For now we just
     // hard code the canvas's display size on the screen.
     m_window("Brush App", screen_width, screen_height),
-    m_gui(m_window.window(), glm::vec2{ float(canvas_display_width), float(canvas_display_height) }),
+    m_gui(m_window.window(), glm::vec2( canvas_display_width, canvas_display_height )),
     m_canvas(canvas_width, canvas_height),
     m_user_state()
 {
@@ -184,7 +184,7 @@ void App::apply_brush_stroke(UserState& user_state) {
     }
 }
 
-void App::save_image_to_downloads() {
+std::string App::get_new_image_filename() {
     auto now = std::chrono::system_clock::now();
     std::time_t t = std::chrono::system_clock::to_time_t(now);
 
@@ -202,6 +202,11 @@ void App::save_image_to_downloads() {
     const char* user_profile = std::getenv("USERPROFILE");
 
     std::string filename = std::format("{}/Downloads/brush_{}.png", user_profile, time_str);
+    return filename;
+}
+
+void App::save_image_to_downloads() {
+    std::string filename = get_new_image_filename();
     m_canvas.save_as_png(filename.c_str());
 }
 
@@ -215,12 +220,8 @@ DebugState App::generate_debug_state() {
 
 glm::vec2 App::get_mouse_pos_on_canvas() {
     glm::vec2 mouse_pos = m_window.get_mouse_pos();
-
     glm::vec2 normalised_canvas_pos = m_gui.get_normalised_mouse_pos_on_canvas(mouse_pos);
-    glm::vec2 canvas_pos = glm::vec2(
-        normalised_canvas_pos.x * m_canvas.width(),
-        normalised_canvas_pos.y * m_canvas.height()
-    );
+    glm::vec2 canvas_pos = normalised_canvas_pos * m_canvas.size();
     return canvas_pos;
 }
 

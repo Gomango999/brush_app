@@ -9,6 +9,7 @@
 #include <glm/glm.hpp>
 
 #include "brush.h"
+#include "frame_buffer.h"
 #include "layer.h"
 #include "program.h"
 #include "texture.h"
@@ -20,7 +21,7 @@
 class Canvas {
 public:
 	Canvas(size_t _width, size_t _height);
-	~Canvas();
+	~Canvas() = default;
 
 	Layer::Id insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer);
 	std::optional<Layer::Id> delete_selected_layer(std::optional<Layer::Id> selected_layer);
@@ -49,17 +50,21 @@ public:
 
 	void save_as_png(const char* filename) const;
 
-	size_t width() const;
-	size_t height() const;
-	const std::vector<Layer>& get_layers() const;
-	const Texture2D& output_texture() const;
+
+	size_t width() const { return m_output_frame_buffer.width(); }
+	size_t height() const { return m_output_frame_buffer.height(); }
+	glm::vec2 size() const { return glm::vec2(width(), height()); }
+
+	const std::vector<Layer>& get_layers() const { return m_layers; }
+
+	const Texture2D& output_texture() const { return m_output_texture; }
+
 
 private:
-	size_t m_width, m_height;
-
 	glm::vec3 m_base_color;
 	std::vector<Layer> m_layers;
-	GLuint m_output_fbo;
+
+	FrameBuffer m_output_frame_buffer;
 	Texture2D m_output_texture;
 
 	Program m_cursor_program;
@@ -69,8 +74,6 @@ private:
 	void move_layer(std::optional<Layer::Id> layer_id, int delta);
 
 	void render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos);
-
-	void load_output_image(std::vector<uint8_t>& pixels) const;
 };
 
 

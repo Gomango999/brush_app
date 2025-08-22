@@ -8,28 +8,15 @@
 #include "glm/glm.hpp"
 
 #include "brush.h"
+#include "frame_buffer.h"
 #include "layer.h"
 #include "program.h"
 #include "texture.h"
 
-static GLuint generate_fbo(const Texture2D& texture) {
-    GLuint fbo_id = 0;
-    glGenFramebuffers(1, &fbo_id);
-    glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id(), 0);
-
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-        throw std::runtime_error("Framebuffer incomplete: status = " + std::to_string(status));
-    }
-
-    return fbo_id;
-}
-
 Layer::Layer(size_t width, size_t height)
     : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
-    m_gpu_texture(width, height)
+    m_gpu_texture(width, height),
+    m_frame_buffer(width, height)
 {
     static Id current_id = 0;
     current_id++;
@@ -40,36 +27,29 @@ Layer::Layer(size_t width, size_t height)
     m_is_visible = true;
     m_is_alpha_locked = false;
 
-    if (!GLAD_GL_ARB_sparse_texture) {
-        throw std::runtime_error("GL_ARB_sparse_texture not supported");
-    }
-
-    m_fbo = generate_fbo(m_gpu_texture);
+    m_frame_buffer.bind();
+    m_frame_buffer.attach_texture_to_color_output(m_gpu_texture);
 }
 
 Layer::Layer(Layer&& other) noexcept
     : m_gpu_texture(std::move(other.m_gpu_texture)),
-    m_fbo(other.m_fbo),
+    m_frame_buffer(std::move(other.m_frame_buffer)),
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
     m_is_alpha_locked(other.m_is_alpha_locked),
     m_quad_program(std::move(other.m_quad_program))
-{
-    other.m_fbo = 0;
-}
+{}
 
 Layer& Layer::operator=(Layer&& other) noexcept {
     if (this != &other) {
         m_gpu_texture = std::move(other.m_gpu_texture);
-        m_fbo = other.m_fbo;
+        m_frame_buffer = std::move(other.m_frame_buffer);
         m_id = other.m_id;
         m_name = std::move(other.m_name);
         m_is_visible = other.m_is_visible;
         m_is_alpha_locked = other.m_is_alpha_locked;
         m_quad_program = std::move(other.m_quad_program);
-
-        other.m_fbo = 0;
     }
     return *this;
 }
@@ -86,8 +66,8 @@ GLuint Layer::get_dummy_vao() const {
 }
 
 void Layer::draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, glm::vec3 color) {
-    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    glViewport(0, 0, m_gpu_texture.width(), m_gpu_texture.height());
+    m_frame_buffer.bind();
+    m_frame_buffer.set_viewport();
 
     brush.draw_at_point(
         glm::vec2(m_gpu_texture.width(), m_gpu_texture.height()),
