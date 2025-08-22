@@ -171,7 +171,7 @@ void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState sta
 
     int num_segments = int(dist / min_size) * 8;
     num_segments = std::max(1, num_segments);
-    num_segments = std::min(32, num_segments); 
+    num_segments = std::min(16, num_segments); 
 
     for (unsigned int i = 1; i <= num_segments; i++) {
         float alpha = (float)i / num_segments;
