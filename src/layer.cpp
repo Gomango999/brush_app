@@ -12,6 +12,7 @@
 #include "layer.h"
 #include "program.h"
 #include "texture.h"
+#include "vao.h"
 
 Layer::Layer(size_t width, size_t height)
     : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
@@ -54,17 +55,6 @@ Layer& Layer::operator=(Layer&& other) noexcept {
     return *this;
 }
 
-GLuint Layer::get_dummy_vao() const {
-    // OpenGL requires a VAO to be bound in order for the call not
-    // to be discarded. We attach a dummy one, even though the
-    // vertex data is hardcoded into the vertex shader. 
-    static GLuint dummy_vao = 0;
-    if (dummy_vao == 0) {
-        glGenVertexArrays(1, &dummy_vao);
-    }
-    return dummy_vao;
-}
-
 void Layer::draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, glm::vec3 color) {
     m_frame_buffer.bind();
     m_frame_buffer.set_viewport();
@@ -77,7 +67,7 @@ void Layer::draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, g
         m_is_alpha_locked
     );
 
-    GLuint dummy_vao = get_dummy_vao();
+    GLuint dummy_vao = VAO::get_dummy();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
@@ -89,7 +79,7 @@ void Layer::render() {
     m_gpu_texture.bind_to_0();
     m_quad_program.set_uniform_1i("u_texture", 0);
 
-    GLuint dummy_vao = get_dummy_vao();
+    GLuint dummy_vao = VAO::get_dummy();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }

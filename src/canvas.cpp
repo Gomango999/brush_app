@@ -200,7 +200,10 @@ void Canvas::render(BrushManager& brush_manager, glm::vec2 mouse_pos) {
         layer.render();
     }
     
-    render_cursor(brush_manager, mouse_pos);
+
+
+    // TODO: Temporarily disabled. 
+    //render_cursor(brush_manager, mouse_pos);
 
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.

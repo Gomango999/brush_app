@@ -2,14 +2,22 @@
 
 #include <glm/glm.hpp>
 
+#include "frame_buffer.h"
+#include "program.h"
+#include "texture.h"
+
 class CanvasView {
 	float m_scale;
 	float m_rotation; // stored in radians
 	glm::vec2 m_translation;
-	
-	size_t m_width, m_height;
+
+	Texture2D m_texture;
+	FrameBuffer m_frame_buffer;
+	Program m_program;
 
 public:
+	CanvasView(size_t window_width, size_t window_height);
+
 	glm::vec2 translation() const { return m_translation; }
 	float scale() const { return m_scale; }
 	float rotation() const { return m_rotation; }
@@ -24,10 +32,12 @@ public:
 
 	void flip();
 
-	size_t width() const { return m_width; };
-	size_t height() const { return m_height; };
-	void set_width(size_t width) { m_width = width; };
-	void set_height(size_t height) { m_height = height; };
+	void render(const Texture2D& canvas);
+
+	size_t width() const { return m_texture.width(); }
+	size_t height() const { return m_texture.height(); }
+	void resize(size_t width, size_t height);
+	const Texture2D& get_view_texture() const { return m_texture; }
 
 private:
 	glm::mat3 translation_mat() const;

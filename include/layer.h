@@ -28,9 +28,6 @@ private:
 
     Program m_quad_program;
 
-    GLuint get_dummy_vao() const;
-
-
 public:
     Layer(size_t width, size_t height);
     ~Layer() = default;

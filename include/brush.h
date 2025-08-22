@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -15,10 +16,10 @@ class Brush {
 public:
     typedef unsigned long long Id;
 
-    Id id() const;
-    std::string name() const;
-    float& size();
-    float& opacity();
+    Id id() const { return m_id; }
+    std::string name() const { return m_name; }
+    float& size() { return m_size; }
+    float& opacity() { return m_opacity; }
 
     void draw_at_point(
         glm::vec2 image_size, 
@@ -28,8 +29,8 @@ public:
 
     void decrease_size();
     void increase_size();
-    void decrease_opacity();
-    void increase_opacity();
+    void decrease_opacity() { m_opacity = std::max(0.0, m_opacity - 0.1); }
+    void increase_opacity() { m_opacity = std::min(1.0, m_opacity + 0.1); }
 
 protected:
 
@@ -48,7 +49,6 @@ protected:
     );
     virtual void set_blend_mode(bool is_alpha_locked) = 0;
 
-    GLuint get_dummy_vao();
     void apply_program();
     Program load_brush_program(const char* shader_path);
 };

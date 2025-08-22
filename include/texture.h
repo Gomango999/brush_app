@@ -6,11 +6,10 @@
 #include <glm/glm.hpp>
 
 class Texture2D {
+    const GLuint mip_map_level = 0;
+
 public:
     Texture2D(GLsizei width, GLsizei height) {
-        m_width = width;
-        m_height = height;
-
         glGenTextures(1, &m_id);
         if (m_id == 0) {
             throw std::runtime_error("Failed to generate OpenGL texture!");
@@ -21,14 +20,7 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        const GLuint mip_map_level = 0;
-        glTexImage2D(
-            GL_TEXTURE_2D, 
-            mip_map_level, GL_RGBA8, 
-            m_width, m_height, 0, 
-            GL_RGBA, GL_UNSIGNED_BYTE, 
-            nullptr
-        );
+        assign_texture(m_width, m_height);
     }
 
     ~Texture2D() {
@@ -72,6 +64,26 @@ public:
     void bind_to_0() const {
         set_active(0);
         bind();
+    }
+
+    void assign_texture(GLsizei width, GLsizei height) {
+        m_width = width;
+        m_height = height;
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            mip_map_level,
+            GL_RGBA8,
+            width, height,
+            0,
+            GL_RGBA, GL_UNSIGNED_BYTE,
+            nullptr
+        );
+    }
+
+    void resize(GLsizei width, GLsizei height) {
+        if (width != m_width || height != m_height) {
+            assign_texture(width, height);
+        }
     }
 
     GLuint id() const { return m_id; }

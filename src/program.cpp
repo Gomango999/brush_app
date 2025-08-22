@@ -7,6 +7,7 @@
 
 #include "program.h"
 #include "glm/glm.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 
 Program::Program() : m_program_id(0) {}
@@ -113,6 +114,11 @@ void Program::set_uniform_3f(const char* name, const glm::vec3& v) {
 void Program::set_uniform_4f(const char* name, const glm::vec4& v) {
     const GLint loc = get_uniform_location(name);
     glUniform4f(loc, v.x, v.y, v.z, v.w);
+}
+
+void Program::set_uniform_mat3(const char* name, const glm::mat3& mat) {
+    const GLint loc = get_uniform_location(name);
+    glUniformMatrix3fv(loc, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 std::string Program::load_shader_source(const std::string& path) {

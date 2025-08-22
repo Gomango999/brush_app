@@ -29,6 +29,7 @@ public:
     void set_uniform_2f(const char* name, const glm::vec2& v);
     void set_uniform_3f(const char* name, const glm::vec3& v);
     void set_uniform_4f(const char* name, const glm::vec4& v);
+    void set_uniform_mat3(const char* name, const glm::mat3& mat);
 
 private:
     GLuint m_program_id;

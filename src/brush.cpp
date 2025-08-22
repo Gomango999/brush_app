@@ -10,6 +10,7 @@
 
 #include "brush.h"
 #include "program.h"
+#include "vao.h"
 
 Brush::Brush() {
     static Id next_id = 0;
@@ -20,15 +21,6 @@ Brush::Brush() {
     m_size = 10.0;
 
     next_id++;
-}
-
-
-GLuint Brush::get_dummy_vao() {
-    static GLuint dummy_vao = 0;
-    if (dummy_vao == 0) {
-        glGenVertexArrays(1, &dummy_vao);
-    }
-    return dummy_vao;
 }
 
 void Brush::set_program_uniforms(
@@ -48,7 +40,7 @@ void Brush::set_program_uniforms(
 void Brush::apply_program() {
     m_brush_program.use();
 
-    GLuint dummy_vao = get_dummy_vao();
+    GLuint dummy_vao = VAO::get_dummy();
     glBindVertexArray(dummy_vao);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
@@ -83,30 +75,6 @@ void Brush::increase_size() {
     auto it = std::upper_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), m_size);
     if (it == BRUSH_SIZES.end()) m_size = MAX_BRUSH_SIZE;
     else m_size = *it;
-}
-
-void Brush::decrease_opacity() {
-    m_opacity = std::max(0.0, m_opacity - 0.1);
-}
-
-void Brush::increase_opacity() {
-    m_opacity = std::min(1.0, m_opacity + 0.1);
-}
-
-Brush::Id Brush::id() const {
-    return m_id;
-}
-
-std::string Brush::name() const {
-    return m_name;
-}
-
-float& Brush::size() {
-    return m_size;
-}
-
-float& Brush::opacity() {
-    return m_opacity;
 }
 
 

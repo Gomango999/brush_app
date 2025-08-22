@@ -1,8 +1,45 @@
 #include <cmath>
 
+#include <glad.h>
 #include <glm/glm.hpp>
 
 #include "canvas_view.h"
+#include "frame_buffer.h"
+#include "texture.h"
+#include "vao.h"
+
+CanvasView::CanvasView(size_t window_width, size_t window_height) :
+    m_texture(window_width, window_height),
+    m_frame_buffer(m_texture.width(), m_texture.height()),
+    m_program("../src/shaders/canvas_view.vert", "../src/shaders/canvas_view.frag")
+{
+    m_scale = 1.0;
+    m_rotation = 0.0;
+    m_translation = glm::vec2(0.0, 0.0);
+}
+
+void CanvasView::render(const Texture2D& canvas) {
+    m_frame_buffer.bind();
+    m_frame_buffer.set_viewport();
+    const glm::vec4 black = glm::vec4(0.0, 0.0, 0.0, 1.0f);
+    m_frame_buffer.clear(black);
+
+    glm::mat3 transform = get_transform();
+
+    m_program.use(); 
+    m_program.set_uniform_mat3("u_transform", transform);
+
+    canvas.bind_to_0();
+    m_program.set_uniform_1i("u_canvas", 0); 
+
+    GLuint dummy_vao = VAO::get_dummy();
+    glBindVertexArray(dummy_vao);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+
+    glBindVertexArray(0);
+    canvas.unbind();
+    m_frame_buffer.unbind();
+}
 
 glm::mat3 CanvasView::get_transform() const {
     // Canonical order: Scale -> Rotate -> Translate
@@ -28,7 +65,7 @@ void CanvasView::zoom_out_of_point(glm::vec2 point) {
 void CanvasView::rotate(float delta_radians) {
     m_rotation += delta_radians;
 
-    glm::vec2 screen_center(m_width * 0.5f, m_height * 0.5f);
+    glm::vec2 screen_center(width() * 0.5f, height() * 0.5f);
 
     glm::vec2 offset = m_translation - screen_center;
 
@@ -74,3 +111,14 @@ glm::mat3 CanvasView::rotation_mat() const {
     mat[1][0] = s;  mat[1][1] = c;
     return mat;
 }
+
+void CanvasView::resize(size_t width, size_t height) {
+    m_texture.bind();
+    m_texture.resize(width, height);
+    m_frame_buffer.bind();
+    m_frame_buffer.attach_texture_to_color_output(m_texture);
+}
+
+
+
+
