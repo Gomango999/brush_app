@@ -40,7 +40,6 @@ void Brush::set_program_uniforms(
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    m_brush_program.set_uniform_1i("u_texture", 0);
     m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
     m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
     m_brush_program.set_uniform_1f("u_radius", m_size * pressure);
@@ -124,10 +123,11 @@ Pen::Pen() {
 
 void Pen::set_blend_mode(bool is_alpha_locked) {
     if (!is_alpha_locked) {
-        glDisable(GL_BLEND);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     } else {
         glEnable(GL_BLEND);
-        glBlendFuncSeparate(GL_ONE, GL_ZERO, GL_ZERO, GL_ONE);
+        glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ZERO, GL_ONE);
     }
 }
 
@@ -141,7 +141,8 @@ Eraser::Eraser() {
 }
 
 void Eraser::set_blend_mode(bool _is_alpha_locked) {
-    glDisable(GL_BLEND);
+    glEnable(GL_BLEND);
+    glBlendFuncSeparate(GL_ZERO, GL_ONE, GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 void Eraser::set_program_uniforms(

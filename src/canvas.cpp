@@ -182,11 +182,7 @@ void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState sta
 
     int num_segments = int(dist / min_size) * 8;
     num_segments = std::max(1, num_segments);
-    // BUG: Having too high num_segments too high (~16) creates strange square artifacts
-    // which I suspect has something to do with the tile size of sparse textures. I've
-    // also observed flickering pixels as well, though I'm not sure if that is related.
-    // For now, we limit the maximun number of segments to a relatively small number.
-    num_segments = std::min(12, num_segments); 
+    num_segments = std::min(32, num_segments); 
 
     for (unsigned int i = 1; i <= num_segments; i++) {
         float alpha = (float)i / num_segments;
