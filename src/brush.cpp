@@ -5,10 +5,10 @@
 #include <string>
 
 #include "glad/glad.h"
+#include "glm/glm.hpp"
 
 #include "brush.h"
 #include "program.h"
-#include "vec.h"
 
 Brush::Brush() {
     static Id next_id = 0;
@@ -32,19 +32,19 @@ GLuint Brush::get_dummy_vao() {
 
 void Brush::set_program_uniforms(
     GLuint texture,
-    Vec2 image_size,
-    Vec2 mouse_pos,
+    glm::vec2 image_size,
+    glm::vec2 mouse_pos,
     float pressure,
-    Vec3 color
+    glm::vec3 color
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
-    m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
-    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
+    m_brush_program.set_uniform_2f("u_tex_dim", image_size);
+    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos);
     m_brush_program.set_uniform_1f("u_radius", m_size * pressure);
     m_brush_program.set_uniform_1f("u_opacity", m_opacity);
-    m_brush_program.set_uniform_3f("u_color", color.r(), color.g(), color.b());
+    m_brush_program.set_uniform_3f("u_color", color);
 }
 
 void Brush::apply_program() {
@@ -61,10 +61,10 @@ Program Brush::load_brush_program(const char* shader_path) {
 
 void Brush::draw_at_point(
     GLuint texture,
-    Vec2 image_size,
-    Vec2 mouse_pos,
+    glm::vec2 image_size,
+    glm::vec2 mouse_pos,
     float pressure,
-    Vec3 color,
+    glm::vec3 color,
     bool is_alpha_locked
 ) {
     set_program_uniforms(texture, image_size, mouse_pos, pressure, color);
@@ -147,17 +147,17 @@ void Eraser::set_blend_mode(bool _is_alpha_locked) {
 
 void Eraser::set_program_uniforms(
     GLuint texture,
-    Vec2 image_size,
-    Vec2 mouse_pos,
+    glm::vec2 image_size,
+    glm::vec2 mouse_pos,
     float pressure,
-    Vec3 _color
+    glm::vec3 _color
 ) {
     m_brush_program.use();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, texture);
     m_brush_program.set_uniform_1i("u_texture", 0);
-    m_brush_program.set_uniform_2f("u_tex_dim", image_size.x(), image_size.y());
-    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos.x(), mouse_pos.y());
+    m_brush_program.set_uniform_2f("u_tex_dim", image_size);
+    m_brush_program.set_uniform_2f("u_circle_pos", mouse_pos);
     m_brush_program.set_uniform_1f("u_radius", m_size * pressure);
     m_brush_program.set_uniform_1f("u_opacity", m_opacity);
 }

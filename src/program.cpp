@@ -6,6 +6,7 @@
 #include <stdexcept>
 
 #include "program.h"
+#include "glm/glm.hpp"
 
 
 Program::Program() : m_program_id(0) {}
@@ -99,6 +100,20 @@ void Program::set_uniform_4f(const char* name, float f1, float f2, float f3, flo
     glUniform4f(loc, f1, f2, f3, f4);
 }
 
+void Program::set_uniform_2f(const char* name, const glm::vec2& v) {
+    const GLint loc = get_uniform_location(name);
+    glUniform2f(loc, v.x, v.y);
+}
+
+void Program::set_uniform_3f(const char* name, const glm::vec3& v) {
+    const GLint loc = get_uniform_location(name);
+    glUniform3f(loc, v.x, v.y, v.z);
+}
+
+void Program::set_uniform_4f(const char* name, const glm::vec4& v) {
+    const GLint loc = get_uniform_location(name);
+    glUniform4f(loc, v.x, v.y, v.z, v.w);
+}
 
 std::string Program::load_shader_source(const std::string& path) {
     std::ifstream file(path);

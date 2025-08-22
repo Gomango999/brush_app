@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "glad/glad.h"
+#include "glm/glm.hpp"
 
 #include "program.h"
-#include "vec.h"
 
 class Brush {
 public:
@@ -20,7 +20,12 @@ public:
     float& size();
     float& opacity();
 
-    void draw_at_point(GLuint texture, Vec2 image_size, Vec2 mouse_pos, float pressure, Vec3 color, bool is_alpha_locked);
+    void draw_at_point(
+        GLuint texture, 
+        glm::vec2 image_size, 
+        glm::vec2 mouse_pos, float pressure, glm::vec3 color, 
+        bool is_alpha_locked
+    );
 
     void decrease_size();
     void increase_size();
@@ -38,7 +43,10 @@ protected:
 
     Brush();
 
-    virtual void set_program_uniforms(GLuint texture, Vec2 image_size, Vec2 mouse_pos, float pressure, Vec3 color);
+    virtual void set_program_uniforms(
+        GLuint texture, glm::vec2 image_size, 
+        glm::vec2 mouse_pos, float pressure, glm::vec3 color
+    );
     virtual void set_blend_mode(bool is_alpha_locked) = 0;
 
     GLuint get_dummy_vao();
@@ -56,7 +64,10 @@ class Eraser : public Brush {
 public:
     Eraser();
     void set_blend_mode(bool _is_alpha_locked);
-    void set_program_uniforms(GLuint texture, Vec2 image_size, Vec2 mouse_pos, float pressure, Vec3 _color) override;
+    void set_program_uniforms(
+        GLuint texture, glm::vec2 image_size, 
+        glm::vec2 mouse_pos, float pressure, glm::vec3 color
+    );
 };
 
 

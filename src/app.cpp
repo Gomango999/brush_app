@@ -12,13 +12,14 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 
+#include "glm/glm.hpp"
+
 #include "app.h"
 #include "brush.h"
 #include "canvas.h"
 #include "gui.h"
 #include "layer.h"
 #include "user_state.h"
-#include "vec.h"
 
 App::App(
     unsigned int screen_width,
@@ -33,7 +34,7 @@ App::App(
     // SOMEDAY: To be removed when we implement zooming. For now we just
     // hard code the canvas's display size on the screen.
     m_window("Brush App", screen_width, screen_height),
-    m_gui(m_window.window(), Vec2{ float(canvas_display_width), float(canvas_display_height) }),
+    m_gui(m_window.window(), glm::vec2{ float(canvas_display_width), float(canvas_display_height) }),
     m_canvas(canvas_width, canvas_height),
     m_user_state()
 {
@@ -80,7 +81,7 @@ void App::handle_inputs() {
 
     ImGuiIO& io = ImGui::GetIO();
 
-    Vec2 cursor_pos = get_mouse_pos_on_canvas();
+    glm::vec2 cursor_pos = get_mouse_pos_on_canvas();
     float pressure = m_window.get_pressure();    
     m_user_state.cursor = CursorState(cursor_pos, pressure);
 
@@ -133,7 +134,7 @@ void App::handle_inputs() {
 
     if (m_window.is_mouse_down()) {
         if (io.KeyAlt) {
-            std::optional<Vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
+            std::optional<glm::vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
             if (color_opt.has_value()) {
                 m_user_state.selected_color = color_opt.value();
             }
@@ -153,7 +154,7 @@ void App::handle_inputs() {
 void App::handle_cursor() {
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 
-    Vec2 mouse_pos = m_window.get_mouse_pos();
+    glm::vec2 mouse_pos = m_window.get_mouse_pos();
     if (m_gui.is_hovering_canvas(mouse_pos)) {
         ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
@@ -205,21 +206,21 @@ void App::save_image_to_downloads() {
 }
 
 DebugState App::generate_debug_state() {
-    Vec2 mouse_pos = get_mouse_pos_on_canvas();
+    glm::vec2 mouse_pos = get_mouse_pos_on_canvas();
     return DebugState{
         m_last_dt,
         mouse_pos
     };
 }
 
-Vec2 App::get_mouse_pos_on_canvas() {
-    Vec2 mouse_pos = m_window.get_mouse_pos();
+glm::vec2 App::get_mouse_pos_on_canvas() {
+    glm::vec2 mouse_pos = m_window.get_mouse_pos();
 
-    Vec2 normalised_canvas_pos = m_gui.get_normalised_mouse_pos_on_canvas(mouse_pos);
-    Vec2 canvas_pos = Vec2{
-        normalised_canvas_pos.x() * m_canvas.width(),
-        normalised_canvas_pos.y() * m_canvas.height()
-    };
+    glm::vec2 normalised_canvas_pos = m_gui.get_normalised_mouse_pos_on_canvas(mouse_pos);
+    glm::vec2 canvas_pos = glm::vec2(
+        normalised_canvas_pos.x * m_canvas.width(),
+        normalised_canvas_pos.y * m_canvas.height()
+    );
     return canvas_pos;
 }
 

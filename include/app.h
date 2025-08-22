@@ -1,8 +1,9 @@
 #pragma once
+#include <glm/glm.hpp>
+
 #include "canvas.h"
 #include "gui.h"
 #include "user_state.h"
-#include "vec.h"
 #include "window.h"
 
 class App {
@@ -43,7 +44,7 @@ private:
     void save_image_to_downloads();
     void apply_brush_stroke(UserState& user_state);
 
-    Vec2 get_mouse_pos_on_canvas();
+    glm::vec2 get_mouse_pos_on_canvas();
     DebugState generate_debug_state();
 };
 

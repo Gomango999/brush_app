@@ -10,15 +10,16 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
+#include "glm/glm.hpp"
 
 #include "brush.h"
 #include "canvas.h"
+#include "conversions.h"
 #include "gui.h"
 #include "layer.h"
 #include "user_state.h"
-#include "vec.h"
 
-GUI::GUI(GLFWwindow* window, Vec2 canvas_size) {
+GUI::GUI(GLFWwindow* window, glm::vec2 canvas_size) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -70,7 +71,7 @@ void GUI::define_interface(
     define_layer_window(canvas, user_state.selected_layer);
 }
 
-void GUI::define_color_picker_window(Vec3& color) {
+void GUI::define_color_picker_window(glm::vec3& color) {
     ImGui::Begin("Color");
     ImGui::ColorPicker3(
         "ColorPicker",
@@ -117,12 +118,12 @@ void GUI::define_canvas_window(Canvas& canvas) {
     window_flags |= ImGuiWindowFlags_NoTitleBar;
     ImGui::Begin("Canvas", nullptr, window_flags);
 
-    m_canvas_window_pos = Vec<2>::from_ImVec2(ImGui::GetCursorScreenPos());
-    m_canvas_window_size = Vec<2>::from_ImVec2(ImGui::GetContentRegionAvail());
+    m_canvas_window_pos = to_glm(ImGui::GetCursorScreenPos());
+    m_canvas_window_size = to_glm(ImGui::GetContentRegionAvail());
 
     ImGui::Image(
         (ImTextureID)canvas.output_texture(),
-        m_canvas_display_size.to_ImVec2()
+        to_imvec(m_canvas_display_size)
     );
     ImGui::End();
 }
@@ -131,7 +132,7 @@ void GUI::define_debug_window(DebugState& debug_state, UserState& user_state) {
     ImGui::Begin("Debug");
     imgui_formatted_label_text("dt", "%.9f", debug_state.dt);
     imgui_formatted_label_text("fps", "%.9f", 1.0 / debug_state.dt);
-    imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x()), int(debug_state.mouse_pos.y()));
+    imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x), int(debug_state.mouse_pos.y));
     imgui_formatted_label_text("selected layer", "%d", user_state.selected_layer.has_value() ? user_state.selected_layer.value() : -1);
     ImGui::End();
 }
@@ -230,30 +231,30 @@ void GUI::define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_l
     ImGui::EndChild();
 }
 
-bool GUI::is_hovering_canvas(Vec2 mouse_pos) const {
-    Vec2 top_left = m_canvas_window_pos;
-    Vec2 bottom_right = m_canvas_window_pos + m_canvas_display_size;
-    return mouse_pos.x() >= top_left.x() && mouse_pos.x() < bottom_right.x()
-        && mouse_pos.y() >= top_left.y() && mouse_pos.y() < bottom_right.y();
+bool GUI::is_hovering_canvas(glm::vec2 mouse_pos) const {
+    glm::vec2 top_left = m_canvas_window_pos;
+    glm::vec2 bottom_right = m_canvas_window_pos + m_canvas_display_size;
+    return mouse_pos.x >= top_left.x && mouse_pos.x < bottom_right.x
+        && mouse_pos.y >= top_left.y && mouse_pos.y < bottom_right.y;
 }
 
-bool GUI::is_hovering_canvas_window(Vec2 mouse_pos) const {
-    Vec2 top_left = m_canvas_window_pos;
-    Vec2 bottom_right = m_canvas_window_pos + m_canvas_window_size;
-    return mouse_pos.x() >= top_left.x() && mouse_pos.x() < bottom_right.x()
-        && mouse_pos.y() >= top_left.y() && mouse_pos.y() < bottom_right.y();
+bool GUI::is_hovering_canvas_window(glm::vec2 mouse_pos) const {
+    glm::vec2 top_left = m_canvas_window_pos;
+    glm::vec2 bottom_right = m_canvas_window_pos + m_canvas_window_size;
+    return mouse_pos.x >= top_left.x && mouse_pos.x < bottom_right.x
+        && mouse_pos.y >= top_left.y && mouse_pos.y < bottom_right.y;
 }
 
 // Returns canvas coordinates in the range [0..1]
-Vec2 GUI::get_normalised_mouse_pos_on_canvas(Vec2 mouse_pos) {
-    Vec2 canvas_window_pos = get_mouse_position_on_canvas_window(mouse_pos);
-    Vec2 pos_on_canvas {
-      canvas_window_pos.x() / m_canvas_display_size.x(),
-      canvas_window_pos.y() / m_canvas_display_size.y()
+glm::vec2 GUI::get_normalised_mouse_pos_on_canvas(glm::vec2 mouse_pos) {
+    glm::vec2 canvas_window_pos = get_mouse_position_on_canvas_window(mouse_pos);
+    glm::vec2 pos_on_canvas {
+      canvas_window_pos.x / m_canvas_display_size.x,
+      canvas_window_pos.y / m_canvas_display_size.y
     };
     return pos_on_canvas;
 }
 
-Vec2 GUI::get_mouse_position_on_canvas_window(Vec2 mouse_pos) const {
+glm::vec2 GUI::get_mouse_position_on_canvas_window(glm::vec2 mouse_pos) const {
     return mouse_pos - m_canvas_window_pos;
 }

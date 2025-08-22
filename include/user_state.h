@@ -3,16 +3,15 @@
 
 #include "brush.h"
 #include "layer.h"
-#include "vec.h"
 
 struct CursorState {
-    Vec2 pos;
+    glm::vec2 pos;
     float pressure;
     CursorState() {
-        pos = Vec2{ 0.0, 0.0 };
+        pos = glm::vec2( 0.0, 0.0 );
         pressure = 0.0;
     }
-    CursorState(Vec2 _pos, float _pressure) {
+    CursorState(glm::vec2 _pos, float _pressure) {
         pos = _pos;
         pressure = _pressure;
     }
@@ -23,7 +22,7 @@ struct CursorState {
 struct UserState {
     BrushManager brush_manager;
     std::optional<Layer::Id> selected_layer;
-    Vec3 selected_color;
+    glm::vec3 selected_color;
 
     CursorState cursor;
     std::optional<CursorState> prev_cursor;
@@ -31,7 +30,7 @@ struct UserState {
     bool is_color_picking;
 
     UserState() : brush_manager() {
-        selected_color = Vec3{ 0.0, 0.0, 0.0 };
+        selected_color = glm::vec3( 0.0, 0.0, 0.0 );
         selected_layer = std::nullopt;
         cursor = CursorState();
         prev_cursor = std::nullopt;

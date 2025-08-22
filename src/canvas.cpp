@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "glad/glad.h"
+#include "glm/glm.hpp"
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
@@ -16,7 +17,6 @@
 #include "canvas.h"
 #include "layer.h"
 #include "program.h"
-#include "vec.h"
 
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
@@ -25,7 +25,7 @@ Canvas::Canvas(size_t width, size_t height) {
     m_width = width;
     m_height = height;
 
-    m_base_color = Vec3{ 1.0, 1.0, 1.0 };
+    m_base_color = glm::vec3( 1.0, 1.0, 1.0 );
 
     glGenFramebuffers(1, &m_output_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
@@ -171,12 +171,12 @@ void Canvas::set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked) {
     }
 }
 
-void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, Vec3 color) {
+void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, glm::vec3 color) {
     layer.draw_with_brush(brush, cursor.pos, cursor.pressure, color);
 }
 
-void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState start, CursorState end, Vec3 color) {
-    float dist = (start.pos - end.pos).len();
+void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState start, CursorState end, glm::vec3 color) {
+    float dist = glm::length(start.pos - end.pos);
     float min_pressure = std::min(start.pressure, end.pressure);
     float min_size = brush.size() * min_pressure;
 
@@ -186,24 +186,24 @@ void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState sta
 
     for (unsigned int i = 1; i <= num_segments; i++) {
         float alpha = (float)i / num_segments;
-        Vec2 pos = start.pos * alpha + end.pos * (1.0 - alpha);
-        float pressure = start.pressure * alpha + end.pressure * (1.0 - alpha);
+        glm::vec2 pos = start.pos * alpha + end.pos * (1.0f - alpha);
+        float pressure = start.pressure * alpha + end.pressure * (1.0f - alpha);
 
         draw_circle_at_pos(layer, brush, CursorState(pos, pressure), color);
     }
 }
 
-std::optional<Vec3> Canvas::get_color_at_pos(Vec2 point) {
-    if (point.x() < 0 || point.x() >= m_width ||
-        point.y() < 0 || point.y() >= m_height) {
+std::optional<glm::vec3> Canvas::get_color_at_pos(glm::vec2 point) {
+    if (point.x < 0 || point.x >= m_width ||
+        point.y < 0 || point.y >= m_height) {
         return std::nullopt;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
 
     uint8_t pixel[4];
-    glReadPixels(int(point.x()), int(point.y()), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel);
-    Vec3 color = Vec3{ float(pixel[0] / 255.0), float(pixel[1] / 255.0), float(pixel[2] / 255.0) };
+    glReadPixels(int(point.x), int(point.y), 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, &pixel);
+    glm::vec3 color = glm::vec3{ float(pixel[0] / 255.0), float(pixel[1] / 255.0), float(pixel[2] / 255.0) };
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -222,13 +222,13 @@ GLuint Canvas::get_dummy_vao() const {
 }
 
 // Combines all the layers together in a single framebuffer.
-void Canvas::render(BrushManager& brush_manager, Vec2 mouse_pos) {
+void Canvas::render(BrushManager& brush_manager, glm::vec2 mouse_pos) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
     glViewport(0, 0, m_width, m_height);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glClearColor(m_base_color.r(), m_base_color.g(), m_base_color.b(), 1.0);
+    glClearColor(m_base_color.r, m_base_color.g, m_base_color.b, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     for (Layer& layer : m_layers) {
@@ -243,7 +243,7 @@ void Canvas::render(BrushManager& brush_manager, Vec2 mouse_pos) {
 }
 
 // TODO: Eventually, this call should be deferred to the brush itself.
-void Canvas::render_cursor(BrushManager& brush_manager, Vec2 mouse_pos) {
+void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
     auto brush_opt = brush_manager.get_selected_brush();
     if (!brush_opt.has_value()) return;
     Brush& brush = brush_opt.value();
@@ -254,7 +254,7 @@ void Canvas::render_cursor(BrushManager& brush_manager, Vec2 mouse_pos) {
     glBindTexture(GL_TEXTURE_2D, m_output_texture);
     m_cursor_program.set_uniform_1i("u_texture", 0);
     m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
-    m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos.x(), mouse_pos.y());
+    m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
     m_cursor_program.set_uniform_1f("u_radius", brush.size());
 
     GLuint dummy_vao = get_dummy_vao();

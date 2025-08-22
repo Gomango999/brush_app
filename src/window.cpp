@@ -7,9 +7,10 @@
 #include <glfw/glfw3.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <glfw/glfw3native.h>
+#include <glm/glm.hpp>
 #include <imgui.h>
 
-#include "vec.h"
+#include "conversions.h"
 #include "window.h"
 
 
@@ -54,14 +55,14 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_p
                 POINT m_pen_pos = pen_info.pointerInfo.ptPixelLocation;
                 POINT screen_pos = { 0, 0 };
                 ClientToScreen(hwnd, &screen_pos);
-                Vec2 relative_pen_pos{ 
+                glm::vec2 relative_pen_pos(
                     float(m_pen_pos.x - screen_pos.x), 
                     float(m_pen_pos.y - screen_pos.y) 
-                };
+                );
 
                 // ImGui has different behaviours depending on pen vs tablet, so we just
                 // disguise all pen tablet inputs as mouse inputs instead.
-                io.MousePos = relative_pen_pos.to_ImVec2();
+                io.MousePos = to_imvec(relative_pen_pos);
                 if (msg == WM_POINTERDOWN) io.MouseDown[0] = true;
                 else if (msg == WM_POINTERUP) io.MouseDown[0] = false;
                 float pressure = pen_info.pressure / 1024.f;
@@ -75,7 +76,7 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_p
         }
 
         case WM_MOUSEMOVE: {
-            Vec2 mouse_pos{
+            glm::vec2 mouse_pos{
                 (float)GET_X_LPARAM(l_param),
                 (float)GET_Y_LPARAM(l_param)
             };
@@ -113,10 +114,10 @@ static void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 Window::Window(const char* title, size_t width, size_t height) :
-    m_pen_pos{0.0, 0.0},
+    m_pen_pos(0.0, 0.0),
     m_pen_pressure(0.0),
     m_pen_down(false),
-    m_mouse_pos{0.0, 0.0},
+    m_mouse_pos(0.0, 0.0),
     m_mouse_down(false)
 {
     if (!glfwInit()) {

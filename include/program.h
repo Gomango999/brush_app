@@ -5,6 +5,7 @@
 #include <string>
 
 #include "glad/glad.h"
+#include "glm/glm.hpp"
 
 class Program {
 public:
@@ -25,6 +26,9 @@ public:
     void set_uniform_2f(const char* name, float f1, float f2);
     void set_uniform_3f(const char* name, float f1, float f2, float f3);
     void set_uniform_4f(const char* name, float f1, float f2, float f3, float f4);
+    void set_uniform_2f(const char* name, const glm::vec2& v);
+    void set_uniform_3f(const char* name, const glm::vec3& v);
+    void set_uniform_4f(const char* name, const glm::vec4& v);
 
 private:
     GLuint m_program_id;

@@ -3,30 +3,30 @@
 #include <string>
 
 #include "imgui_impl_glfw.h"
+#include "glm/glm.hpp"
 
 #include "brush.h"
 #include "canvas.h"
 #include "layer.h"
 #include "user_state.h"
-#include "vec.h"
 
 struct DebugState {
     double dt;
-    Vec2 mouse_pos;
+    glm::vec2 mouse_pos;
 };
 
 // GUI class responsible for defining the interface layout in Dear ImGui.
 class GUI {
 private:
-    Vec2 m_canvas_display_size;
+    glm::vec2 m_canvas_display_size;
 
-    Vec2 m_canvas_window_pos;
-    Vec2 m_canvas_window_size;
+    glm::vec2 m_canvas_window_pos;
+    glm::vec2 m_canvas_window_size;
 
     std::optional<std::string> m_alert_message;
 
 public: 
-    GUI(GLFWwindow* window, Vec2 canvas_size);
+    GUI(GLFWwindow* window, glm::vec2 canvas_size);
     ~GUI();
 
     void define_interface(
@@ -35,7 +35,7 @@ public:
         DebugState debug_state
     );
 
-    void define_color_picker_window(Vec3& color);
+    void define_color_picker_window(glm::vec3& color);
     void define_brush_window(BrushManager& brush_manager);
     void define_brush_properties_window(BrushManager& brush_manager);
     void define_debug_window(DebugState& debug_state, UserState& user_state);
@@ -46,9 +46,9 @@ public:
     void define_canvas_window(Canvas& canvas);
 
 
-    bool is_hovering_canvas(Vec2 mouse_pos) const;
-    bool is_hovering_canvas_window(Vec2 mouse_pos) const;
-    Vec2 get_normalised_mouse_pos_on_canvas(Vec2 mouse_pos);
-    Vec2 get_mouse_position_on_canvas_window(Vec2 mouse_pos) const;
+    bool is_hovering_canvas(glm::vec2 mouse_pos) const;
+    bool is_hovering_canvas_window(glm::vec2 mouse_pos) const;
+    glm::vec2 get_normalised_mouse_pos_on_canvas(glm::vec2 mouse_pos);
+    glm::vec2 get_mouse_position_on_canvas_window(glm::vec2 mouse_pos) const;
 };
 
