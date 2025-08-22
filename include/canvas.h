@@ -11,6 +11,7 @@
 #include "brush.h"
 #include "layer.h"
 #include "program.h"
+#include "texture.h"
 #include "user_state.h"
 
 // `Canvas` the canvas pixel data in both the CPU and GPU. It is
@@ -51,7 +52,7 @@ public:
 	size_t width() const;
 	size_t height() const;
 	const std::vector<Layer>& get_layers() const;
-	GLuint output_texture() const;
+	const Texture2D& output_texture() const;
 
 private:
 	size_t m_width, m_height;
@@ -59,7 +60,7 @@ private:
 	glm::vec3 m_base_color;
 	std::vector<Layer> m_layers;
 	GLuint m_output_fbo;
-	GLuint m_output_texture;
+	Texture2D m_output_texture;
 
 	Program m_cursor_program;
 

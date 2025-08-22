@@ -30,6 +30,8 @@ GUI::GUI(GLFWwindow* window, glm::vec2 canvas_size) {
     ImGui_ImplOpenGL3_Init("#version 430 core");
 
     m_canvas_display_size = canvas_size;
+    m_canvas_window_pos = glm::vec2(0, 0);
+    m_canvas_window_size = glm::vec2(0, 0);
 }
 
 GUI::~GUI() {
@@ -122,7 +124,7 @@ void GUI::define_canvas_window(Canvas& canvas) {
     m_canvas_window_size = to_glm(ImGui::GetContentRegionAvail());
 
     ImGui::Image(
-        (ImTextureID)canvas.output_texture(),
+        (ImTextureID)canvas.output_texture().id(),
         to_imvec(m_canvas_display_size)
     );
     ImGui::End();

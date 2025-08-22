@@ -21,7 +21,9 @@
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
 
-Canvas::Canvas(size_t width, size_t height) {
+Canvas::Canvas(size_t width, size_t height)
+    : m_output_texture(width, height) 
+{
     m_width = width;
     m_height = height;
 
@@ -30,19 +32,7 @@ Canvas::Canvas(size_t width, size_t height) {
     glGenFramebuffers(1, &m_output_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_output_fbo);
 
-    glGenTextures(1, &m_output_texture);
-    glBindTexture(GL_TEXTURE_2D, m_output_texture);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_RGBA8,
-        m_width, m_height,
-        0, GL_RGBA, GL_UNSIGNED_BYTE,
-        nullptr
-    );
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_output_texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_output_texture.id(), 0);
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         throw std::exception("Could not set up framebuffer");
     }
@@ -52,7 +42,6 @@ Canvas::Canvas(size_t width, size_t height) {
 
 Canvas::~Canvas() {
     if (m_output_fbo != 0) glDeleteFramebuffers(1, &m_output_fbo);
-    if (m_output_texture != 0) glDeleteFramebuffers(1, &m_output_texture);
 }
 
 Layer::Id Canvas::insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer) {
@@ -249,9 +238,7 @@ void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
     Brush& brush = brush_opt.value();
 
     m_cursor_program.use();
-    // TODO: Move shared code into a Texture/FBO class  
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_output_texture);
+    m_output_texture.bind_to_0();
     m_cursor_program.set_uniform_1i("u_texture", 0);
     m_cursor_program.set_uniform_2f("u_tex_dim", m_width, m_height);
     m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
@@ -297,7 +284,7 @@ const std::vector<Layer>& Canvas::get_layers() const {
     return m_layers;
 }
 
-GLuint Canvas::output_texture() const {
+const Texture2D& Canvas::output_texture() const {
     return m_output_texture;
 }
 

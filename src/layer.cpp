@@ -10,36 +10,14 @@
 #include "brush.h"
 #include "layer.h"
 #include "program.h"
+#include "texture.h"
 
-const GLenum Layer::texture_format = GL_RGBA8;
-const GLint Layer::num_mip_levels = 1;
-
-static GLuint generate_gpu_texture(size_t width, size_t height, GLint num_mip_levels, GLenum texture_format) {
-    GLuint texture_id = 0;
-    glGenTextures(1, &texture_id);
-    glBindTexture(GL_TEXTURE_2D, texture_id);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SPARSE_ARB, GL_TRUE);
-    glTexParameteri(GL_TEXTURE_2D, GL_VIRTUAL_PAGE_SIZE_INDEX_ARB, 0);
-
-    glTexStorage2D(GL_TEXTURE_2D, num_mip_levels, texture_format, width, height);
-    return texture_id;
-}
-
-static void attach_gpu_texture_to_program(GLuint gpu_texture, Program& program) {
-    program.use();
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, gpu_texture);
-
-    program.set_uniform_1i("u_texture", 0);
-}
-
-static GLuint generate_fbo(GLuint texture_id) {
+static GLuint generate_fbo(const Texture2D& texture) {
     GLuint fbo_id = 0;
     glGenFramebuffers(1, &fbo_id);
     glBindFramebuffer(GL_FRAMEBUFFER, fbo_id);
 
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture_id, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.id(), 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -51,8 +29,7 @@ static GLuint generate_fbo(GLuint texture_id) {
 
 Layer::Layer(size_t width, size_t height)
     : m_quad_program("../src/shaders/quad.vert", "../src/shaders/quad.frag"),
-    m_width(width),
-    m_height(height)
+    m_gpu_texture(width, height)
 {
     static Id current_id = 0;
     current_id++;
@@ -67,98 +44,34 @@ Layer::Layer(size_t width, size_t height)
         throw std::runtime_error("GL_ARB_sparse_texture not supported");
     }
 
-    m_gpu_texture = generate_gpu_texture(width, height, num_mip_levels, texture_format);
     m_fbo = generate_fbo(m_gpu_texture);
-
-    glGetInternalformativ(GL_TEXTURE_2D, texture_format, GL_VIRTUAL_PAGE_SIZE_X_ARB, 1, &m_tile_width);
-    glGetInternalformativ(GL_TEXTURE_2D, texture_format, GL_VIRTUAL_PAGE_SIZE_Y_ARB, 1, &m_tile_height);
-
-    allocateAllTiles();
-
-    attach_gpu_texture_to_program(m_gpu_texture, m_quad_program);
-}
-
-Layer::~Layer() {
-    if (m_gpu_texture != 0) {
-        glDeleteTextures(1, &m_gpu_texture);
-    }
 }
 
 Layer::Layer(Layer&& other) noexcept
-    : m_gpu_texture(other.m_gpu_texture),
+    : m_gpu_texture(std::move(other.m_gpu_texture)),
     m_fbo(other.m_fbo),
-    m_width(other.m_width),
-    m_height(other.m_height),
-    m_tile_width(other.m_tile_width),
-    m_tile_height(other.m_tile_height),
     m_id(other.m_id),
     m_name(std::move(other.m_name)),
     m_is_visible(other.m_is_visible),
     m_is_alpha_locked(other.m_is_alpha_locked),
     m_quad_program(std::move(other.m_quad_program))
 {
-    other.m_gpu_texture = 0;
     other.m_fbo = 0;
 }
 
 Layer& Layer::operator=(Layer&& other) noexcept {
     if (this != &other) {
-        m_gpu_texture = other.m_gpu_texture;
+        m_gpu_texture = std::move(other.m_gpu_texture);
         m_fbo = other.m_fbo;
-        m_width = other.m_width;
-        m_height = other.m_height;
-        m_tile_width = other.m_tile_width;
-        m_tile_height = other.m_tile_height;
         m_id = other.m_id;
         m_name = std::move(other.m_name);
         m_is_visible = other.m_is_visible;
         m_is_alpha_locked = other.m_is_alpha_locked;
         m_quad_program = std::move(other.m_quad_program);
 
-        other.m_gpu_texture = 0;
         other.m_fbo = 0;
     }
     return *this;
-}
-
-Layer::TileCoords Layer::calculate_tile_coords_from_pixel_coords(size_t x, size_t y) {
-    return TileCoords{ x / m_tile_width, y / m_tile_height };
-}
-
-void Layer::commitTile(TileCoords coords, bool commit) {
-    size_t x_offset = coords.x * m_tile_width;
-    size_t y_offset = coords.y * m_tile_height;
-
-    size_t width = std::min(m_tile_width, int(m_width) - int(x_offset));
-    size_t height = std::min(m_tile_height, int(m_height) - int(y_offset));
-
-    glBindTexture(GL_TEXTURE_2D, m_gpu_texture);
-    glTexPageCommitmentARB(
-        GL_TEXTURE_2D,
-        0,
-        x_offset, y_offset, 0,
-        width, height, 1,
-        commit
-    );
-}
-
-void Layer::allocateTile(TileCoords coords) {
-    commitTile(coords, true);
-}
-
-void Layer::allocateAllTiles() {
-    int num_pages_x = (m_width + m_tile_width - 1) / m_tile_width;
-    int num_pages_y = (m_height + m_tile_height - 1) / m_tile_height;
-
-    for (size_t x = 0; x < num_pages_x; x++) {
-        for (size_t y = 0; y < num_pages_y; y++) {
-            allocateTile(TileCoords{ x, y });
-        }
-    }
-}
-
-void Layer::freeTile(TileCoords coords) {
-    commitTile(coords, false);
 }
 
 GLuint Layer::get_dummy_vao() const {
@@ -174,11 +87,10 @@ GLuint Layer::get_dummy_vao() const {
 
 void Layer::draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, glm::vec3 color) {
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
-    glViewport(0, 0, m_width, m_height);
+    glViewport(0, 0, m_gpu_texture.width(), m_gpu_texture.height());
 
     brush.draw_at_point(
-        m_gpu_texture, 
-        glm::vec2(float(m_width), float(m_height)), 
+        glm::vec2(m_gpu_texture.width(), m_gpu_texture.height()),
         mouse_pos, 
         pressure,
         color, 
@@ -194,7 +106,8 @@ void Layer::render() {
     if (!m_is_visible) return;
 
     m_quad_program.use();
-    attach_gpu_texture_to_program(m_gpu_texture, m_quad_program);
+    m_gpu_texture.bind_to_0();
+    m_quad_program.set_uniform_1i("u_texture", 0);
 
     GLuint dummy_vao = get_dummy_vao();
     glBindVertexArray(dummy_vao);

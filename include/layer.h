@@ -6,6 +6,7 @@
 
 #include "brush.h"
 #include "program.h"
+#include "texture.h"
 
 class Layer {
 public:
@@ -21,28 +22,17 @@ private:
     bool m_is_visible;
     bool m_is_alpha_locked;
 
-    static const GLenum texture_format;
-    static const GLint num_mip_levels;
-
-    size_t m_width, m_height;
-    GLint m_tile_width, m_tile_height;
-    GLuint m_gpu_texture;
+    Texture2D m_gpu_texture;
     GLuint m_fbo;
 
     Program m_quad_program;
-
-    TileCoords calculate_tile_coords_from_pixel_coords(size_t x, size_t y);
-    void commitTile(TileCoords coords, bool commit);
-    void allocateTile(TileCoords coords);
-    void allocateAllTiles();
-    void freeTile(TileCoords coords);
 
     GLuint get_dummy_vao() const;
 
 
 public:
     Layer(size_t width, size_t height);
-    ~Layer();
+    ~Layer() = default;
     Layer(const Layer&) = delete;
     Layer& operator=(const Layer&) = delete;
     Layer(Layer&& other) noexcept;
@@ -62,5 +52,8 @@ public:
     bool is_alpha_locked() const { return m_is_alpha_locked; }
     void set_alpha_lock(bool locked) { m_is_alpha_locked = locked; }
 
-    GLuint gpu_texture() const { return m_gpu_texture; }
+    size_t width() const { return m_gpu_texture.width(); }
+    size_t height() const { return m_gpu_texture.height(); }
+
+    const Texture2D& gpu_texture() const { return m_gpu_texture; }
 };

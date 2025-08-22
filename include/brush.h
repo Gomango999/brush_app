@@ -21,7 +21,6 @@ public:
     float& opacity();
 
     void draw_at_point(
-        GLuint texture, 
         glm::vec2 image_size, 
         glm::vec2 mouse_pos, float pressure, glm::vec3 color, 
         bool is_alpha_locked
@@ -44,7 +43,7 @@ protected:
     Brush();
 
     virtual void set_program_uniforms(
-        GLuint texture, glm::vec2 image_size, 
+        glm::vec2 image_size, 
         glm::vec2 mouse_pos, float pressure, glm::vec3 color
     );
     virtual void set_blend_mode(bool is_alpha_locked) = 0;
@@ -65,7 +64,7 @@ public:
     Eraser();
     void set_blend_mode(bool _is_alpha_locked);
     void set_program_uniforms(
-        GLuint texture, glm::vec2 image_size, 
+        glm::vec2 image_size, 
         glm::vec2 mouse_pos, float pressure, glm::vec3 color
     );
 };
