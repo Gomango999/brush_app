@@ -8,6 +8,7 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/external/imgui"
     "${CMAKE_SOURCE_DIR}/external/imgui/backends"
     "${CMAKE_SOURCE_DIR}/external/stb"
+    "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/include"
     "C:/cpp_libs/include"
     "C:/cpp_libs/include/glad-4.3"
     "C:/cpp_libs/include/glad-4.3/glad"
