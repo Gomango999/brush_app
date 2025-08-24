@@ -3,11 +3,11 @@
 #include <glad.h>
 #include <glm/glm.hpp>
 
-
 #include "canvas_view.h"
 #include "frame_buffer.h"
 #include "texture.h"
 #include "vao.h"
+
 
 static glm::vec4 canvas_bg_color = glm::vec4(0.0, 0.0, 0.0, 1.0f);
 
@@ -30,6 +30,7 @@ CanvasView::CanvasView(size_t canvas_width, size_t canvas_height):
 }
 
 // TODO: Move these into a helper header 
+// TODO: Make these just 2D matrices
 inline glm::mat3 translate_mat3(const glm::vec2& t) {
     glm::mat3 m(1.0f);
     m[2] = glm::vec3(t, 1.0f);
@@ -97,55 +98,85 @@ void CanvasView::render(glm::vec2 screen_size, const Texture2D& canvas) {
     FrameBuffer::unbind();
 }
 
-// Transforms from NDC coordinates of full screen into NDC coordinates of 
+// Transforms from NDC coordinates of full screen in screen space into NDC coordinates of 
 // screen space where canvas should render.
 // Order of operations: scale (aspect_ratio) -> scale (zoom) -> rotate -> translate
 glm::mat3 CanvasView::get_transform() const {
-    glm::vec2 default_canvas_size = fit_canvas_to_screen(m_frame_buffer.size(), glm::vec2(m_canvas_height, m_canvas_height));
+    glm::vec2 default_canvas_size = fit_canvas_to_screen(
+        m_frame_buffer.size(), 
+        glm::vec2(m_canvas_width, m_canvas_height)
+    );
     glm::mat3 screen_to_default = scale_mat3(
         default_canvas_size.x / m_frame_buffer.width(),
         default_canvas_size.y / m_frame_buffer.height()
     );
-    return translate_mat3(m_translation) * rotate_mat3(m_rotation) * scale_mat3(m_scale) * screen_to_default;
+    return translate_mat3(m_translation) * rotate_mat3(m_rotation)
+        * scale_mat3(m_scale) * screen_to_default;
 }
 
 glm::vec2 CanvasView::screen_space_to_world_space(glm::vec2 point) const {
+    // I have no idea why we don't have to negate the y coordinate,
+    // since this should mean that (-1, -1) represents the top left
+    // of the screen, whereas [canvas_top_left] should theoretically
+    // represent the bottom left since we transform (-1, -1). All
+    // I know is that it works, so I'm leaving it as is.
     glm::vec3 screen_ndc = glm::vec3(
         ((point.x / m_frame_buffer.size().x) * 2.0f - 1.0f),
-        -((point.y / m_frame_buffer.size().y) * 2.0f - 1.0f),
+        ((point.y / m_frame_buffer.size().y) * 2.0f - 1.0f),
         1.0f
     );
 
-    // We compare our point in screen space NDC to the bottom left and
-    // top right corners of the canvas in screen space NDC. We use this
-    // to generate a value between [0..1] in `canvas_normalised`
+    // We compare our point to the bottom left and top right corners 
+    // of the canvas in NDC space. We use this to generate a x and y 
+    // values in [0..1] in [canvas_normalised];
 
     glm::mat3 transform = get_transform();
-    glm::vec3 canvas_bottom_left_ndc = transform * glm::vec3(-1.0, -1.0, 1.0);
-    glm::vec3 canvas_top_right_ndc = transform * glm::vec3(1.0, 1.0, 1.0);
+    glm::vec3 canvas_top_left_ndc = transform * glm::vec3(-1.0, -1.0, 1.0);
+    glm::vec3 canvas_bottom_right_ndc = transform * glm::vec3(1.0, 1.0, 1.0);
 
-    glm::vec3 canvas_normalised = (screen_ndc - canvas_bottom_left_ndc)
-        / (canvas_top_right_ndc - canvas_bottom_left_ndc);
+    glm::vec3 canvas_normalised = (screen_ndc - canvas_top_left_ndc)
+        / (canvas_bottom_right_ndc - canvas_top_left_ndc);
 
     glm::vec2 world_pos = glm::vec2(
         canvas_normalised.x * m_canvas_width,
-        (1.0f - canvas_normalised.y) * m_canvas_height
+        canvas_normalised.y * m_canvas_height
     );
     return world_pos;
 }
 
+
+// Zooms into a point defined in screen-space.
+void CanvasView::zoom(glm::vec2 point, float scale) {
+    glm::vec2 screen_center = m_frame_buffer.size() * 0.5f;
+    glm::vec2 screen_space_offset = screen_center - point;
+    glm::vec2 ndc_offset = (screen_space_offset / m_frame_buffer.size()) * 2.0f;
+    glm::vec2 point_translation = m_translation + ndc_offset;
+    // [point_translation] is a translation in the same NDC space as 
+    // [m_translation]. It stores the translation from [point] to the 
+    // centre of the canvas, whereas [m_translation] stores the 
+    // translation from the centre of the screen to the centre of the
+    // canvas. 
+    glm::vec2 zoom_offset = point_translation * (scale - 1.0f);
+    
+    m_translation += zoom_offset;
+    m_scale *= scale;
+
+    // TODO: Add a maximum zoom and minimum zoom
+    // Min zoom should be something like width is 5% of screen space. 
+    // Max zoom should be something like 30 pixels on the screen horizontally
+}
+
+// TODO: Controls for zoom factor can be moved further out
+static float ZOOM_FACTOR = 1.1f;
+
 // Zooms into a point defined in screen-space.
 void CanvasView::zoom_into_point(glm::vec2 point) {
-    const float zoom_factor = 1.1f;
-    m_translation = point + (m_translation - point) / zoom_factor;
-    m_scale *= zoom_factor;
+    zoom(point, ZOOM_FACTOR);
 }
 
 // Zooms away from a point defined in screen-space.
 void CanvasView::zoom_out_of_point(glm::vec2 point) {
-    const float zoom_factor = 1.1f;
-    m_translation = point + (m_translation - point) * zoom_factor;
-    m_scale /= zoom_factor;
+    zoom(point, 1/ZOOM_FACTOR);
 }
 
 // Rotates around the center of the viewport.

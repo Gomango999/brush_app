@@ -105,6 +105,14 @@ static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM w_param, LPARAM l_p
     return CallWindowProc(window->original_wnd_proc(), hwnd, msg, w_param, l_param);
 }
 
+static void scroll_callback(GLFWwindow*, double xoffset, double yoffset) {
+    if (ImGui::GetCurrentContext() == NULL) return;
+    ImGuiIO& io = ImGui::GetIO();
+    io.MouseWheelH += (float)xoffset;
+    io.MouseWheel += (float)yoffset;
+}
+
+
 static void error_callback(int error, const char* description) {
     std::cerr << "GLFW Error (" << error << "): " << description << std::endl;
 }
@@ -127,7 +135,6 @@ Window::Window(const char* title, size_t width, size_t height) :
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwSetErrorCallback(error_callback);
 
     m_window = glfwCreateWindow(width, height, title, nullptr, nullptr);
     if (m_window == nullptr) {
@@ -136,7 +143,10 @@ Window::Window(const char* title, size_t width, size_t height) :
         exit(EXIT_FAILURE);
     }
     glfwMakeContextCurrent(m_window);
+
     glfwSetFramebufferSizeCallback(m_window, framebuffer_size_callback);
+    glfwSetScrollCallback(m_window, scroll_callback);
+    glfwSetErrorCallback(error_callback);
 
     HWND hwnd = glfwGetWin32Window(m_window);
 
@@ -148,7 +158,6 @@ Window::Window(const char* title, size_t width, size_t height) :
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-
 }
 
 Window::~Window() {

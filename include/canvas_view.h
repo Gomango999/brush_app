@@ -9,7 +9,7 @@
 class CanvasView {
 	float m_scale;
 	float m_rotation; // stored in radians
-	glm::vec2 m_translation;
+	glm::vec2 m_translation; // stored in NDC space 
 
 	size_t m_canvas_width, m_canvas_height;
 
@@ -41,5 +41,7 @@ public:
 	const Texture2D& get_view_texture() const { return m_frame_buffer.texture(); }
 
 private:
+	void zoom(glm::vec2 point, float scale);
+
 	glm::mat3 aspect_ratio_mat() const;
 };

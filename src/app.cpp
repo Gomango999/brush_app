@@ -129,11 +129,10 @@ void App::handle_inputs() {
         save_image_to_downloads();
     }
 
-    if (ImGui::GetIO().MouseWheel > 0) {
-        // TODO: Make sure this works for other points
-        m_canvas.zoom_into_point(glm::vec2(0.0, 0.0));
-    } else if (ImGui::GetIO().MouseWheel < 0) {
-        m_canvas.zoom_out_of_point(glm::vec2(0.0, 0.0));
+    if (io.MouseWheel > 0) {
+        m_canvas.zoom_into_point(cursor_pos);
+    } else if (io.MouseWheel < 0) {
+        m_canvas.zoom_out_of_point(cursor_pos);
     };
 
     bool is_drawing = false;

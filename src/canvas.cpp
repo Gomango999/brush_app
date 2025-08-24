@@ -19,6 +19,9 @@
 #include "layer.h"
 #include "program.h"
 
+// SOMEDAY: Reflect on whether having a [CanvasView] class within [Canvas]
+// is truly the best way to separate concerns.
+
 const size_t N_CHANNELS = 4;
 const float MAX_BRUSH_RADIUS = 1000.0;
 

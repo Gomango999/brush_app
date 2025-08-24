@@ -4,8 +4,8 @@
 
 const unsigned int SCREEN_WIDTH = 2560;
 const unsigned int SCREEN_HEIGHT = 1440;
-const unsigned int CANVAS_WIDTH = 8000;
-const unsigned int CANVAS_HEIGHT = 8000;
+const unsigned int CANVAS_WIDTH = 6500;
+const unsigned int CANVAS_HEIGHT = 10000;
 const unsigned int CANVAS_DISPLAY_WIDTH = 1200;
 const unsigned int CANVAS_DISPLAY_HEIGHT = 1200;
 
