@@ -1,0 +1,74 @@
+#include <functional>
+#include <memory>
+#include <optional>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "canvas.h"
+#include "tools.h"
+#include "user_state.h"
+
+ToolManager::ToolManager() {
+    // TODO: Add on the base set of tools
+
+    if (!m_tools.empty()) {
+        m_selected_tool = m_tools[0]->id();
+    }
+    else {
+        m_selected_tool = std::nullopt;
+    }
+}
+
+std::optional<std::reference_wrapper<Tool>> ToolManager::get_selected_tool() {
+    if (!m_selected_tool) return std::nullopt;
+    return get_tool_by_id(m_selected_tool.value());
+}
+
+void ToolManager::select_tool_by_id(Tool::Id tool_id) {
+    if (get_tool_by_id(tool_id).has_value()) {
+        m_prev_tool = m_selected_tool;
+        m_selected_tool = tool_id;
+    }
+}
+
+void ToolManager::select_tool_by_name(std::string name) {
+    auto tool = get_tool_by_name(name);
+    if (tool.has_value()) {
+        m_prev_tool = m_selected_tool;
+        m_selected_tool = tool.value().get().id();
+    }
+}
+
+void ToolManager::select_previous_tool() {
+    std::swap(m_prev_tool, m_selected_tool);
+}
+
+
+const std::optional<std::reference_wrapper<Tool>> ToolManager::get_tool_by_id(Tool::Id tool_id) {
+    return find_tool([tool_id](const auto& tool) {
+        return tool->id() == tool_id;
+    });
+}
+
+const std::optional<std::reference_wrapper<Tool>> ToolManager::get_tool_by_name(std::string name) {
+    return find_tool([&name](const auto& tool) {
+        return tool->name() == name;
+    });
+}
+
+template <typename Predicate>
+const std::optional<std::reference_wrapper<Tool>> ToolManager::find_tool(Predicate&& pred) {
+    auto it = std::find_if(m_tools.begin(), m_tools.end(),
+        std::forward<Predicate>(pred));
+
+    return (it != m_tools.end())
+        ? std::optional{ std::ref(**it) }
+    : std::nullopt;
+}
+
+const std::vector<std::unique_ptr<Tool>>& ToolManager::tools() const {
+    return m_tools;
+}
+
+
