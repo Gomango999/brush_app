@@ -1,5 +1,5 @@
 # Brush App
-![Sample Painted Illustration](assets/field.png)
+![Sample Painted Illustration](assets/field_ui.jpg)
 Sample Illustration: 8Kx8K, 17 layers. Original art by [Denis Istomin](https://www.artstation.com/artwork/wrboNw) 
 
 A toy project to learn about implementing a paint app similar to Clip Studio Paint. 
