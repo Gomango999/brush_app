@@ -1,15 +1,12 @@
 
 #include <algorithm>
 #include <iterator>
-#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
 
 #include "glad/glad.h"
-#include <glm/detail/func_geometric.inl>
-#include <glm/detail/type_vec2.inl>
-#include <glm/fwd.hpp>
+#include "glm/glm.hpp"
 
 #include "brush.h"
 #include "canvas.h"

@@ -1,8 +1,11 @@
 #pragma once
-#include <glm/glm.hpp>
+#include <string>
+
+#include <glm/fwd.hpp>
 
 #include "canvas.h"
 #include "gui.h"
+#include "tools.h"
 #include "user_state.h"
 #include "window.h"
 
@@ -19,7 +22,6 @@ public:
 
     void run();
 
-
 private:
     unsigned int m_screen_width;
     unsigned int m_screen_height;
@@ -27,6 +29,7 @@ private:
     Window m_window;
     GUI m_gui;
     Canvas m_canvas;
+    ToolManager m_tool_manager;
     UserState m_user_state;
 
     double m_last_update_time;
@@ -37,15 +40,16 @@ private:
     const double m_target_display_dt = 1.0 / m_target_display_fps;
 
     void handle_inputs();
+    void update_user_state_cursor();
     void handle_cursor();
 
     void render();
 
     std::string get_new_image_filename();
     void save_image_to_downloads();
-    void apply_brush_stroke(UserState& user_state);
 
     glm::vec2 get_mouse_pos_in_canvas_window();
+    glm::vec2 get_mouse_pos_in_canvas();
     DebugState generate_debug_state();
 };
 

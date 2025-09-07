@@ -18,8 +18,8 @@ public:
 
     void decrease_size();
     void increase_size();
-    void decrease_opacity() { m_opacity = std::max(0.0, m_opacity - 0.1); }
-    void increase_opacity() { m_opacity = std::min(1.0, m_opacity + 0.1); }
+    void decrease_opacity() { m_opacity = std::max(0.0f, m_opacity - 0.1f); }
+    void increase_opacity() { m_opacity = std::min(1.0f, m_opacity + 0.1f); }
 
 protected:
     float m_size;

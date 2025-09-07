@@ -18,7 +18,6 @@ protected:
     std::string m_name;
 
     Tool(); 
-    ~Tool() = default;
 
 public:
     // TODO: Separate out user_state into mouse_state and canvas_state. These functions
@@ -35,7 +34,7 @@ public:
 };
 
 class ToolManager {
-    std::vector<const std::unique_ptr<Tool>> m_tools;
+    std::vector<std::unique_ptr<Tool>> m_tools;
     std::optional<Tool::Id> m_selected_tool;
     std::optional<Tool::Id> m_prev_tool;
 
@@ -50,7 +49,7 @@ public:
     void select_tool_by_name(std::string name);
     void select_previous_tool();
 
-    const std::vector<const std::unique_ptr<Tool>>& tools() const;
+    const std::vector<std::unique_ptr<Tool>>& tools() const;
 
 private:
     const std::optional<std::reference_wrapper<Tool>> get_tool_by_id(Tool::Id tool_id);

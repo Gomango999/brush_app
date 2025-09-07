@@ -1,3 +1,6 @@
+// Not including this will break uses of std::min and std::max
+// in the rest of the application.
+#define NOMINMAX 
 #include <windows.h>
 
 #include <glfw/glfw3.h>

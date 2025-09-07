@@ -57,6 +57,7 @@ static void imgui_formatted_label_text(const char* label, const char* fmt, ...) 
 void GUI::define_interface(
     UserState& user_state,
     Canvas& canvas,
+    ToolManager& tool_manager,
     DebugState debug_state
 ) {
     ImGui_ImplOpenGL3_NewFrame();
@@ -65,8 +66,8 @@ void GUI::define_interface(
     ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 
     define_color_picker_window(user_state.selected_color);
-    define_brush_window(user_state.brush_manager);
-    define_brush_properties_window(user_state.brush_manager);
+    define_tool_window(tool_manager);
+    define_tool_properties_window(tool_manager);
     define_canvas_window(canvas);
     define_debug_window(debug_state, user_state);
     define_error_popup();
@@ -84,17 +85,18 @@ void GUI::define_color_picker_window(glm::vec3& color) {
     ImGui::End();
 }
 
-void GUI::define_brush_window(BrushManager& brush_manager) {
-    ImGui::Begin("Brush");
+void GUI::define_tool_window(ToolManager& tool_manager) {
+    ImGui::Begin("Tools");
 
-    ImGui::BeginChild("BrushList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
-    for (const std::unique_ptr<Brush>& brush : brush_manager.brushes()) {
-        auto selected_brush_opt = brush_manager.get_selected_brush();
-        bool is_selected = selected_brush_opt.has_value() ?
-            brush->id() == selected_brush_opt.value().get().id() :
+    ImGui::BeginChild("ToolList", ImVec2(0, 200), true, ImGuiWindowFlags_AlwaysVerticalScrollbar);
+
+    for (auto& tool : tool_manager.tools()) {
+        auto selected_tool_opt = tool_manager.get_selected_tool();
+        bool is_selected = selected_tool_opt.has_value() ?
+            tool->id() == selected_tool_opt.value().get().id() :
             false;
-        if (ImGui::Selectable(brush->name().c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
-            brush_manager.set_selected_brush(brush->id());
+        if (ImGui::Selectable(tool->name().c_str(), is_selected, ImGuiSelectableFlags_SpanAllColumns)) {
+            tool_manager.select_tool_by_id(tool->id());
         }
     }
     ImGui::EndChild();
@@ -102,14 +104,18 @@ void GUI::define_brush_window(BrushManager& brush_manager) {
     ImGui::End();
 }
 
-void GUI::define_brush_properties_window(BrushManager& brush_manager) {
+void GUI::define_tool_properties_window(ToolManager& tool_manager) {
     ImGui::Begin("Properties");
-    auto brush_opt = brush_manager.get_selected_brush();
-    if (brush_opt.has_value()) {
-        Brush& brush = brush_opt.value().get();
-
-        ImGui::SliderFloat("Size", &brush.size(), 1.0f, 1000.0f, "%f");
-        ImGui::SliderFloat("Opacity", &brush.opacity(), 0.0f, 1.0f);
+    // TODO: In future, every tool should define it's own GUI. For
+    // now we only add hardcoded functionality for brushes.
+    auto selected_tool_opt = tool_manager.get_selected_tool();
+    if (selected_tool_opt.has_value()) {
+        Tool& selected_tool = selected_tool_opt.value().get();
+        
+        if (Brush* brush = dynamic_cast<Brush*>(&selected_tool)) {
+           ImGui::SliderFloat("Size", &brush->size(), 1.0f, 1000.0f, "%f");
+            ImGui::SliderFloat("Opacity", &brush->opacity(), 0.0f, 1.0f);
+        }
     }
     ImGui::End();
 }

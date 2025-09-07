@@ -1,7 +1,6 @@
 #pragma once
 #include <optional>
 
-#include "brush.h"
 #include "layer.h"
 
 struct CursorState {
@@ -18,22 +17,18 @@ struct CursorState {
 };
 
 // UserState is used to inform how to draw to the screen.
-// It is modified and displayed within the GUI.
+// It's fields are modified and displayed within the GUI.
 struct UserState {
-    BrushManager brush_manager;
     std::optional<Layer::Id> selected_layer;
     glm::vec3 selected_color;
 
     CursorState cursor;
     std::optional<CursorState> prev_cursor;
 
-    bool is_color_picking;
-
-    UserState() : brush_manager() {
+    UserState() {
         selected_color = glm::vec3( 0.0, 0.0, 0.0 );
         selected_layer = std::nullopt;
         cursor = CursorState();
         prev_cursor = std::nullopt;
-        is_color_picking = false;
     };
 };

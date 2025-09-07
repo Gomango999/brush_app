@@ -11,7 +11,8 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 
-#include "glm/glm.hpp"
+#include <glm/detail/type_vec3.hpp>
+#include <glm/fwd.hpp>
 
 #include "app.h"
 #include "brush.h"
@@ -19,6 +20,7 @@
 #include "frame_buffer.h"
 #include "gui.h"
 #include "layer.h"
+#include "tools.h"
 #include "user_state.h"
 
 App::App(
@@ -36,6 +38,7 @@ App::App(
     m_window("Brush App", screen_width, screen_height),
     m_gui(m_window.window(), glm::vec2( canvas_display_width, canvas_display_height )),
     m_canvas(canvas_width, canvas_height),
+    m_tool_manager(),
     m_user_state()
 {
     m_last_dt = 0.0;
@@ -59,6 +62,7 @@ void App::run() {
             m_gui.define_interface(
                 m_user_state,
                 m_canvas,
+                m_tool_manager,
                 debug_state
             );
 
@@ -79,117 +83,75 @@ void App::run() {
 void App::handle_inputs() {
     glfwPollEvents();
 
-    ImGuiIO& io = ImGui::GetIO();
-
-    glm::vec2 cursor_pos = get_mouse_pos_in_canvas_window();
-    float pressure = m_window.get_pressure();    
-    m_user_state.cursor = CursorState(cursor_pos, pressure);
-
-    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
-        m_window.set_should_close(true);
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_1)) {
-        auto brush = m_user_state.brush_manager.get_selected_brush();
-        if (brush.has_value()) {
-            brush.value().get().decrease_size();
-        }
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_3)) {
-        auto brush = m_user_state.brush_manager.get_selected_brush();
-        if (brush.has_value()) {
-            brush.value().get().increase_size();
-        }
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_2)) {
-        auto brush = m_user_state.brush_manager.get_selected_brush();
-        if (brush.has_value()) {
-            brush.value().get().decrease_opacity();
-        }
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_4)) {
-        auto brush = m_user_state.brush_manager.get_selected_brush();
-        if (brush.has_value()) {
-            brush.value().get().increase_opacity();
-        }
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_D)) {
-        m_user_state.brush_manager.set_selected_brush_by_name("Pen");
-    }
-
-    if (ImGui::IsKeyPressed(ImGuiKey_E)) {
-        m_user_state.brush_manager.set_selected_brush_by_name("Eraser");
-    }
+    // TODO: Make a wrapper that generates our own ImGuiIO, but
+    // overwrites it with our own mouse events from m_window.
+    const ImGuiIO& io = ImGui::GetIO();
+    update_user_state_cursor();
 
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
         save_image_to_downloads();
     }
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        m_window.set_should_close(true);
+    }
 
     if (io.MouseWheel > 0) {
-        m_canvas.zoom_into_point(cursor_pos);
+        m_canvas.zoom_into_point(m_user_state.cursor.pos);
     } else if (io.MouseWheel < 0) {
-        m_canvas.zoom_out_of_point(cursor_pos);
+        m_canvas.zoom_out_of_point(m_user_state.cursor.pos);
     };
 
-    bool is_drawing = false;
-    m_user_state.is_color_picking = io.KeyAlt;
+    if (ImGui::IsKeyPressed(ImGuiKey_D)) {
+        m_tool_manager.select_tool_by_name("Pen");
+    }
+    if (ImGui::IsKeyPressed(ImGuiKey_E)) {
+        m_tool_manager.select_tool_by_name("Eraser");
+    }
 
-    if (m_window.is_mouse_down()) {
-        if (io.KeyAlt) {
-            std::optional<glm::vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
-            if (color_opt.has_value()) {
-                m_user_state.selected_color = color_opt.value();
-            }
+    auto tool_opt = m_tool_manager.get_selected_tool();
+    if (tool_opt.has_value()) {
+        Tool& tool = tool_opt.value().get();
+        
+        if (Brush* brush = dynamic_cast<Brush*>(&tool)) {
+            if (ImGui::IsKeyPressed(ImGuiKey_1)) brush->decrease_size();
+            if (ImGui::IsKeyPressed(ImGuiKey_3)) brush->increase_size();
+            if (ImGui::IsKeyPressed(ImGuiKey_2)) brush->decrease_opacity();
+            if (ImGui::IsKeyPressed(ImGuiKey_4)) brush->increase_opacity();
+            if (m_window.is_mouse_down()) brush->on_mouse_down(m_canvas, m_user_state);
         } else {
-            apply_brush_stroke(m_user_state);
-            is_drawing = true;
+            // TODO: Add back in color picking
+            //if (m_window.is_mouse_down() && io.KeyAlt) {
+            //    std::optional<glm::vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
+            //    if (color_opt.has_value()) {
+            //        m_user_state.selected_color = color_opt.value();
+            //    }
+            //}
         }
     }
     
-    if (is_drawing) {
+    if (m_window.is_mouse_down()) {
         m_user_state.prev_cursor = m_user_state.cursor;
     } else {
         m_user_state.prev_cursor = std::nullopt;
     }
 }
 
+void App::update_user_state_cursor() {
+    glm::vec2 cursor_pos = get_mouse_pos_in_canvas();
+    float pressure = m_window.get_pressure();
+    m_user_state.cursor = CursorState(cursor_pos, pressure);
+}
+
 void App::handle_cursor() {
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 
-    // TODO: Fix up the cursor display
+    // TODO: Move the cursor logic into the specific tools themselves. 
+
     //glm::vec2 mouse_pos = m_window.get_mouse_pos();
     //if (m_gui.is_hovering_canvas(mouse_pos)) {
     //    ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-
-    //    if (m_user_state.is_color_picking) {
-    //        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
-    //    }
     //}
 }
-
-//void App::apply_brush_stroke(UserState& user_state) {
-//    if (!user_state.selected_layer.has_value()) return;
-//
-//    Layer::Id layer_id = user_state.selected_layer.value();
-//    auto layer_opt = m_canvas.lookup_layer(layer_id);
-//    if (!layer_opt.has_value()) return;
-//    Layer& layer = layer_opt.value().get();
-//
-//    auto brush_opt = user_state.brush_manager.get_selected_brush();
-//    if (!brush_opt.has_value()) return;
-//    Brush& brush = brush_opt.value().get();
-//
-//    if (!user_state.prev_cursor.has_value()) {
-//        m_canvas.draw_circle_at_pos(layer, brush, user_state.cursor, user_state.selected_color);
-//    }
-//    else {
-//        m_canvas.draw_circles_on_segment(layer, brush, m_user_state.cursor, m_user_state.prev_cursor.value(), m_user_state.selected_color);
-//    }
-//}
 
 std::string App::get_new_image_filename() {
     auto now = std::chrono::system_clock::now();
@@ -233,10 +195,15 @@ glm::vec2 App::get_mouse_pos_in_canvas_window() {
     return screen_pos;
 }
 
+glm::vec2 App::get_mouse_pos_in_canvas() {
+    glm::vec2 screen_pos = get_mouse_pos_in_canvas_window();
+    glm::vec2 canvas_pos = m_canvas.screen_space_to_world_space(screen_pos);
+    return canvas_pos;
+}
+
 void App::render() {
     m_canvas.render(
         m_gui.canvas_window_size(), 
-        m_user_state.brush_manager, 
         m_user_state.cursor.pos
     );
     FrameBuffer::unbind();

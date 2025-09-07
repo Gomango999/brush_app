@@ -2,12 +2,12 @@
 #include <optional>
 #include <string>
 
-#include "imgui_impl_glfw.h"
-#include "glm/glm.hpp"
+#include <imgui_impl_glfw.h>
+#include <glm/fwd.hpp>
 
-#include "brush.h"
 #include "canvas.h"
 #include "layer.h"
+#include "tools.h"
 #include "user_state.h"
 
 struct DebugState {
@@ -33,12 +33,13 @@ public:
     void define_interface(
         UserState& user_state,
         Canvas& canvas,
+        ToolManager& tool_manager,
         DebugState debug_state
     );
 
     void define_color_picker_window(glm::vec3& color);
-    void define_brush_window(BrushManager& brush_manager);
-    void define_brush_properties_window(BrushManager& brush_manager);
+    void define_tool_window(ToolManager& tool_manager);
+    void define_tool_properties_window(ToolManager& tool_manager);
     void define_debug_window(DebugState& debug_state, UserState& user_state);
     void define_error_popup();
     void define_layer_window(Canvas& canvas, std::optional<Layer::Id>& selected_layer);

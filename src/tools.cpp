@@ -2,12 +2,10 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include "canvas.h"
 #include "tools.h"
-#include "user_state.h"
+#include "brush.h"
 
 Tool::Tool() {
     static Id next_id = 0;
@@ -18,14 +16,10 @@ Tool::Tool() {
 }
 
 ToolManager::ToolManager() {
-    // TODO: Add on the base set of tools
+    m_tools.push_back(std::make_unique<Pen>());
+    m_tools.push_back(std::make_unique<Eraser>());
 
-    if (!m_tools.empty()) {
-        m_selected_tool = m_tools[0]->id();
-    }
-    else {
-        m_selected_tool = std::nullopt;
-    }
+    m_selected_tool = !m_tools.empty() ? std::optional{ m_tools[0]->id() } : std::nullopt;
 }
 
 std::optional<std::reference_wrapper<Tool>> ToolManager::get_selected_tool() {
@@ -75,7 +69,7 @@ const std::optional<std::reference_wrapper<Tool>> ToolManager::find_tool(Predica
     : std::nullopt;
 }
 
-const std::vector<const std::unique_ptr<Tool>>& ToolManager::tools() const {
+const std::vector<std::unique_ptr<Tool>>& ToolManager::tools() const {
     return m_tools;
 }
 

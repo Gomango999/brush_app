@@ -34,6 +34,25 @@ Canvas::Canvas(size_t width, size_t height)
     m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
 }
 
+bool Canvas::layer_exists(Layer::Id layer_id) {
+    return std::any_of(m_layers.begin(), m_layers.end(), 
+        [layer_id](const Layer& layer) { return layer.id() == layer_id; });
+}
+
+std::optional<std::reference_wrapper<Layer>> Canvas::lookup_layer(Layer::Id layer_id) {
+    auto layer = std::find_if(m_layers.begin(), m_layers.end(),
+        [layer_id](const Layer& layer) {
+            return layer.id() == layer_id;
+        });
+
+    if (layer != m_layers.end()) {
+        return std::ref(*layer);
+    }
+    else {
+        return std::nullopt;
+    }
+}
+
 Layer::Id Canvas::insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer) {
     Layer::Id target_layer_id = selected_layer.has_value() ?
         selected_layer.value() :
@@ -110,20 +129,6 @@ void Canvas::move_layer(std::optional<Layer::Id> layer_id, int delta) {
     m_layers.insert(m_layers.begin() + new_index, std::move(layer));
 }
 
-std::optional<std::reference_wrapper<Layer>> Canvas::lookup_layer(Layer::Id layer_id) {
-    auto layer = std::find_if(m_layers.begin(), m_layers.end(),
-        [layer_id](const Layer& layer) {
-            return layer.id() == layer_id;
-        });
-
-    if (layer != m_layers.end()) {
-        return std::ref(*layer);
-    }
-    else {
-        return std::nullopt;
-    }
-}
-
 bool Canvas::get_layer_visibility(Layer::Id layer_id) {
     auto layer = lookup_layer(layer_id);
     if (!layer.has_value()) return false;
@@ -154,21 +159,14 @@ std::optional<glm::vec3> Canvas::get_color_at_pos(glm::vec2 point) {
     return m_output_frame_buffer.get_color_at_pos(point);
 }
 
-GLuint Canvas::get_dummy_vao() const {
-    // OpenGL requires a VAO to be bound in order for the call not
-    // to be discarded. We attach a dummy one, even though the
-    // vertex data is hardcoded into the vertex shader. 
-    static GLuint dummy_vao = 0;
-    if (dummy_vao == 0) {
-        glGenVertexArrays(1, &dummy_vao);
-    }
-    return dummy_vao;
+void Canvas::bind_fbo() {
+    m_output_frame_buffer.bind();
+    m_output_frame_buffer.set_viewport();
 }
 
 // Combines all the layers together in a single framebuffer.
-void Canvas::render(glm::vec2 screen_area, BrushManager& brush_manager, glm::vec2 mouse_pos) {
-    m_output_frame_buffer.bind();
-    m_output_frame_buffer.set_viewport();
+void Canvas::render(glm::vec2 screen_area, glm::vec2 mouse_pos) {
+    bind_fbo();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -181,33 +179,30 @@ void Canvas::render(glm::vec2 screen_area, BrushManager& brush_manager, glm::vec
     
     m_canvas_view.render(screen_area, m_output_frame_buffer.texture());
 
-    // TODO: Temporarily disabled. 
-    //render_cursor(brush_manager, mouse_pos);
-
     // Unbind the framebuffer. If we don't do this, this causes
     // ImGUI to render a black screen.
-    FrameBuffer::unbind();
+    unbind_fbo();
 }
 
-// TODO: Eventually, this call should be deferred to the brush itself.
-void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
-    auto brush_opt = brush_manager.get_selected_brush();
-    if (!brush_opt.has_value()) return;
-    Brush& brush = brush_opt.value();
-
-    const Texture2D& output_texture = m_output_frame_buffer.texture();
-
-    m_cursor_program.use();
-    output_texture.bind_to_0();
-    m_cursor_program.set_uniform_1i("u_texture", 0);
-    m_cursor_program.set_uniform_2f("u_tex_dim", output_texture.size());
-    m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
-    m_cursor_program.set_uniform_1f("u_radius", brush.size());
-
-    GLuint dummy_vao = get_dummy_vao();
-    glBindVertexArray(dummy_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-}
+// TODO: Move this functionality into the brush itself.
+//void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
+//    auto brush_opt = brush_manager.get_selected_brush();
+//    if (!brush_opt.has_value()) return;
+//    Brush& brush = brush_opt.value();
+//
+//    const Texture2D& output_texture = m_output_frame_buffer.texture();
+//
+//    m_cursor_program.use();
+//    output_texture.bind_to_0();
+//    m_cursor_program.set_uniform_1i("u_texture", 0);
+//    m_cursor_program.set_uniform_2f("u_tex_dim", output_texture.size());
+//    m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
+//    m_cursor_program.set_uniform_1f("u_radius", brush.size());
+//
+//    GLuint dummy_vao = get_dummy_vao();
+//    glBindVertexArray(dummy_vao);
+//    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+//}
 
 void Canvas::save_as_png(const char* filename) const {
     std::vector<uint8_t> pixels;
@@ -215,9 +210,5 @@ void Canvas::save_as_png(const char* filename) const {
     stbi_write_png(filename, width(), height(), 4, pixels.data(), width() * 4);
 }
 
-bool Canvas::layer_exists(Layer::Id layer_id) {
-    return std::any_of(m_layers.begin(), m_layers.end(), 
-        [layer_id](const Layer& layer) { return layer.id() == layer_id; });
-}
 
 
