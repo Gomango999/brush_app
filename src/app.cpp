@@ -171,25 +171,25 @@ void App::handle_cursor() {
     //}
 }
 
-void App::apply_brush_stroke(UserState& user_state) {
-    if (!user_state.selected_layer.has_value()) return;
-
-    Layer::Id layer_id = user_state.selected_layer.value();
-    auto layer_opt = m_canvas.lookup_layer(layer_id);
-    if (!layer_opt.has_value()) return;
-    Layer& layer = layer_opt.value().get();
-
-    auto brush_opt = user_state.brush_manager.get_selected_brush();
-    if (!brush_opt.has_value()) return;
-    Brush& brush = brush_opt.value().get();
-
-    if (!user_state.prev_cursor.has_value()) {
-        m_canvas.draw_circle_at_pos(layer, brush, user_state.cursor, user_state.selected_color);
-    }
-    else {
-        m_canvas.draw_circles_on_segment(layer, brush, m_user_state.cursor, m_user_state.prev_cursor.value(), m_user_state.selected_color);
-    }
-}
+//void App::apply_brush_stroke(UserState& user_state) {
+//    if (!user_state.selected_layer.has_value()) return;
+//
+//    Layer::Id layer_id = user_state.selected_layer.value();
+//    auto layer_opt = m_canvas.lookup_layer(layer_id);
+//    if (!layer_opt.has_value()) return;
+//    Layer& layer = layer_opt.value().get();
+//
+//    auto brush_opt = user_state.brush_manager.get_selected_brush();
+//    if (!brush_opt.has_value()) return;
+//    Brush& brush = brush_opt.value().get();
+//
+//    if (!user_state.prev_cursor.has_value()) {
+//        m_canvas.draw_circle_at_pos(layer, brush, user_state.cursor, user_state.selected_color);
+//    }
+//    else {
+//        m_canvas.draw_circles_on_segment(layer, brush, m_user_state.cursor, m_user_state.prev_cursor.value(), m_user_state.selected_color);
+//    }
+//}
 
 std::string App::get_new_image_filename() {
     auto now = std::chrono::system_clock::now();

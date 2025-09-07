@@ -150,29 +150,6 @@ void Canvas::set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked) {
     }
 }
 
-void Canvas::draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, glm::vec3 color) {
-    glm::vec2 canvas_pos = m_canvas_view.screen_space_to_world_space(cursor.pos);
-    layer.draw_with_brush(brush, canvas_pos, cursor.pressure, color);
-}
-
-void Canvas::draw_circles_on_segment(Layer& layer, Brush& brush, CursorState start, CursorState end, glm::vec3 color) {
-    float dist = glm::length(start.pos - end.pos);
-    float min_pressure = std::min(start.pressure, end.pressure);
-    float min_size = brush.size() * min_pressure;
-
-    int num_segments = int(dist / min_size) * 8;
-    num_segments = std::max(1, num_segments);
-    num_segments = std::min(16, num_segments); 
-
-    for (unsigned int i = 1; i <= num_segments; i++) {
-        float alpha = (float)i / num_segments;
-        glm::vec2 pos = start.pos * alpha + end.pos * (1.0f - alpha);
-        float pressure = start.pressure * alpha + end.pressure * (1.0f - alpha);
-
-        draw_circle_at_pos(layer, brush, CursorState(pos, pressure), color);
-    }
-}
-
 std::optional<glm::vec3> Canvas::get_color_at_pos(glm::vec2 point) {
     return m_output_frame_buffer.get_color_at_pos(point);
 }
@@ -236,6 +213,11 @@ void Canvas::save_as_png(const char* filename) const {
     std::vector<uint8_t> pixels;
     m_output_frame_buffer.get_pixel_data(pixels);
     stbi_write_png(filename, width(), height(), 4, pixels.data(), width() * 4);
+}
+
+bool Canvas::layer_exists(Layer::Id layer_id) {
+    return std::any_of(m_layers.begin(), m_layers.end(), 
+        [layer_id](const Layer& layer) { return layer.id() == layer_id; });
 }
 
 

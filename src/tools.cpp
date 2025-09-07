@@ -9,6 +9,14 @@
 #include "tools.h"
 #include "user_state.h"
 
+Tool::Tool() {
+    static Id next_id = 0;
+    m_id = next_id;
+    next_id++;
+
+    m_name = "Unnamed Tool";
+}
+
 ToolManager::ToolManager() {
     // TODO: Add on the base set of tools
 
@@ -67,7 +75,7 @@ const std::optional<std::reference_wrapper<Tool>> ToolManager::find_tool(Predica
     : std::nullopt;
 }
 
-const std::vector<std::unique_ptr<Tool>>& ToolManager::tools() const {
+const std::vector<const std::unique_ptr<Tool>>& ToolManager::tools() const {
     return m_tools;
 }
 

@@ -33,6 +33,7 @@ public:
 	Canvas(size_t _width, size_t _height);
 	~Canvas() = default;
 
+	std::optional<std::reference_wrapper<Layer>> lookup_layer(Layer::Id layer_id);
 	Layer::Id insert_new_layer_above_selected(std::optional<Layer::Id> selected_layer);
 	std::optional<Layer::Id> delete_selected_layer(std::optional<Layer::Id> selected_layer);
 	void move_layer_up(std::optional<Layer::Id> layer_id);
@@ -41,16 +42,6 @@ public:
 	void set_layer_visibility(Layer::Id layer_id, bool is_visible);
 	bool get_layer_alpha_lock(Layer::Id layer_id);
 	void set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked);
-	std::optional<std::reference_wrapper<Layer>> lookup_layer(Layer::Id layer_id);
-
-	// TODO: Make everything in canvas consistently take arguments in screen space,
-	// and run conversions internally.
-	void draw_circle_at_pos(Layer& layer, Brush& brush, CursorState cursor, glm::vec3 color);
-	void draw_circles_on_segment(
-		Layer& layer, Brush& brush,
-		CursorState start, CursorState end,
-		glm::vec3 color
-	);
 
 	glm::vec2 screen_space_to_world_space(glm::vec2 point) const { return m_canvas_view.screen_space_to_world_space(point); }
 
@@ -70,6 +61,7 @@ public:
 	size_t height() const { return m_output_frame_buffer.height(); }
 	glm::vec2 size() const { return glm::vec2(width(), height()); }
 
+	bool layer_exists(Layer::Id layer_id);
 	const std::vector<Layer>& get_layers() const { return m_layers; }
 
 	const Texture2D& output_texture() const { return m_output_frame_buffer.texture(); }

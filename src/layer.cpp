@@ -1,13 +1,10 @@
 #include <algorithm>
 #include <format>
-#include <stdexcept>
 #include <string>
 #include <utility>
 
 #include "glad/glad.h"
-#include "glm/glm.hpp"
 
-#include "brush.h"
 #include "frame_buffer.h"
 #include "layer.h"
 #include "program.h"
@@ -49,21 +46,9 @@ Layer& Layer::operator=(Layer&& other) noexcept {
     return *this;
 }
 
-void Layer::draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, glm::vec3 color) {
+void Layer::bind_fbo() const {
     m_frame_buffer.bind();
     m_frame_buffer.set_viewport();
-
-    brush.draw_at_point(
-        m_frame_buffer.size(),
-        mouse_pos, 
-        pressure,
-        color, 
-        m_is_alpha_locked
-    );
-
-    GLuint dummy_vao = VAO::get_dummy();
-    glBindVertexArray(dummy_vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
 void Layer::render() {

@@ -1,10 +1,8 @@
 #pragma once
 #include <string>
 
-#include "glad/glad.h"
-#include "glm/glm.hpp"
+#include <glm/fwd.hpp>
 
-#include "brush.h"
 #include "frame_buffer.h"
 #include "program.h"
 #include "texture.h"
@@ -14,10 +12,6 @@ public:
     typedef unsigned int Id;
 
 private:
-    struct TileCoords {
-        size_t x, y;
-    };
-
     Id m_id;
     std::string m_name;
     bool m_is_visible;
@@ -35,7 +29,9 @@ public:
     Layer(Layer&& other) noexcept;
     Layer& operator=(Layer&& other) noexcept;
 
-    void draw_with_brush(Brush& brush, glm::vec2 mouse_pos, float pressure, glm::vec3 color);
+    void bind_fbo() const;
+    void unbind_fbo() const { FrameBuffer::unbind(); };
+
     void render();
 
     Id id() const { return m_id; }
@@ -51,6 +47,7 @@ public:
 
     size_t width() const { return m_frame_buffer.width(); }
     size_t height() const { return m_frame_buffer.height(); }
+    glm::vec2 size() const { return m_frame_buffer.size(); }
 
     const Texture2D& gpu_texture() const { return m_frame_buffer.texture(); }
 };

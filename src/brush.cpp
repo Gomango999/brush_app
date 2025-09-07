@@ -1,3 +1,4 @@
+
 #include <algorithm>
 #include <iterator>
 #include <memory>
@@ -6,21 +7,20 @@
 #include <vector>
 
 #include "glad/glad.h"
-#include "glm/glm.hpp"
+#include <glm/detail/func_geometric.inl>
+#include <glm/detail/type_vec2.inl>
+#include <glm/fwd.hpp>
 
 #include "brush.h"
+#include "canvas.h"
+#include "layer.h"
 #include "program.h"
 #include "vao.h"
 
 Brush::Brush() {
-    static Id next_id = 0;
-    m_id = next_id;
-    
-    m_name = "";
+    m_name = "Unnamed Brush";
     m_opacity = 1.0;
     m_size = 10.0;
-
-    next_id++;
 }
 
 void Brush::set_program_uniforms(
@@ -49,6 +49,35 @@ Program Brush::load_brush_program(const char* shader_path) {
     return Program("../src/shaders/quad.vert", shader_path);
 }
 
+const float MIN_BRUSH_SIZE = 1.0f;
+const float MAX_BRUSH_SIZE = 1000.0f;
+const std::vector<float> BRUSH_SIZES{ 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 17, 20, 25, 30, 40, 60, 70, 80, 100, 120, 150, 170, 200, 250, 300, 400, 500, 600, 700, 800, 1000 };
+
+void Brush::on_mouse_down(Canvas& canvas, UserState& user_state) {
+    Layer::Id layer_id = user_state.selected_layer.value();
+    auto layer_opt = canvas.lookup_layer(layer_id);
+    if (!layer_opt.has_value()) return;
+    const Layer& layer = layer_opt.value().get();
+
+    layer.bind_fbo();
+
+    if (!user_state.prev_cursor.has_value()) {
+        draw_at_point(
+            layer.size(),
+            user_state.cursor.pos,
+            user_state.cursor.pressure,
+            user_state.selected_color,
+            layer.is_alpha_locked()
+        );
+    } else {
+        CursorState start = user_state.prev_cursor.value();
+        CursorState end = user_state.cursor;
+        draw_segment(layer.size(), start, end, user_state.selected_color, layer.is_alpha_locked());
+    }
+
+    layer.unbind_fbo();
+}
+
 void Brush::draw_at_point(
     glm::vec2 image_size,
     glm::vec2 mouse_pos,
@@ -61,9 +90,35 @@ void Brush::draw_at_point(
     apply_program();
 }
 
-const float MIN_BRUSH_SIZE = 1.0f;
-const float MAX_BRUSH_SIZE = 1000.0f;
-const std::vector<float> BRUSH_SIZES{ 1, 1.5, 2, 2.5, 3, 4, 5, 6, 7, 8, 9, 10, 12, 15, 17, 20, 25, 30, 40, 60, 70, 80, 100, 120, 150, 170, 200, 250, 300, 400, 500, 600, 700, 800, 1000 };
+void Brush::draw_segment(
+    glm::vec2 image_size, 
+    CursorState start, 
+    CursorState end, 
+    glm::vec3 color, 
+    bool is_alpha_locked
+) {
+    float dist = glm::length(start.pos - end.pos);
+    float min_pressure = std::min(start.pressure, end.pressure);
+    float min_size = size() * min_pressure;
+
+    int num_segments = int(dist / min_size) * 8;
+    num_segments = std::max(1, num_segments);
+    num_segments = std::min(16, num_segments);
+
+    for (unsigned int i = 1; i <= num_segments; i++) {
+        float alpha = (float)i / num_segments;
+        glm::vec2 pos = start.pos * alpha + end.pos * (1.0f - alpha);
+        float pressure = start.pressure * alpha + end.pressure * (1.0f - alpha);
+
+        draw_at_point(
+            image_size,
+            pos,
+            pressure,
+            color,
+            is_alpha_locked
+        );
+    }
+}
 
 void Brush::decrease_size() {
     auto it = std::lower_bound(BRUSH_SIZES.begin(), BRUSH_SIZES.end(), m_size);
@@ -125,49 +180,4 @@ void Eraser::set_program_uniforms(
 
 
 
-BrushManager::BrushManager() {
-    m_brushes.push_back(std::make_unique<Pen>());
-    m_brushes.push_back(std::make_unique<Eraser>());
 
-    if (!m_brushes.empty()) {
-        m_selected_brush = m_brushes[0]->id();
-    } else {
-        m_selected_brush = std::nullopt;
-    }
-}
-
-const std::optional<std::reference_wrapper<Brush>> BrushManager::get_brush(Brush::Id brush_id) {
-    for (const auto& brush : m_brushes) {
-        if (brush->id() == brush_id) {
-            return std::ref(*brush);
-        }
-    }
-    return std::nullopt;
-}
-
-void BrushManager::set_selected_brush(Brush::Id brush_id) {
-    for (const auto& brush : m_brushes) {
-        if (brush->id() == brush_id) {
-            m_selected_brush = brush_id;
-            return;
-        }
-    }
-}
-
-void BrushManager::set_selected_brush_by_name(std::string name) {
-    for (const auto& brush : m_brushes) {
-        if (brush->name() == name) {
-            m_selected_brush = brush->id();
-            return;
-        }
-    }
-}
-
-std::optional<std::reference_wrapper<Brush>> BrushManager::get_selected_brush() {
-    if (!m_selected_brush) return std::nullopt;
-    return get_brush(m_selected_brush.value());
-}
-
-const std::vector<std::unique_ptr<Brush>>& BrushManager::brushes() const {
-    return m_brushes;
-}

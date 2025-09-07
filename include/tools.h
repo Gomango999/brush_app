@@ -5,19 +5,19 @@
 #include <string>
 #include <vector>
 
-#include "canvas.h"
 #include "user_state.h"
+
+class Canvas;
 
 class Tool {
 public:
     typedef unsigned long long Id;
 
-private:
+protected:
     Id m_id;
     std::string m_name;
 
-protected:
-    Tool() = default; // TODO: Assign our own ID here.
+    Tool(); 
     ~Tool() = default;
 
 public:
@@ -28,12 +28,14 @@ public:
     virtual void on_mouse_release(Canvas& canvas, UserState& user_state) {}
     virtual void set_mouse_cursor() {}
 
+    // TODO: Tools should be responsible for creating their on ImGui UI settings.
+
     Id id() const { return m_id; }
     std::string name() const { return m_name; }
 };
 
 class ToolManager {
-    std::vector<std::unique_ptr<Tool>> m_tools;
+    std::vector<const std::unique_ptr<Tool>> m_tools;
     std::optional<Tool::Id> m_selected_tool;
     std::optional<Tool::Id> m_prev_tool;
 
@@ -48,8 +50,7 @@ public:
     void select_tool_by_name(std::string name);
     void select_previous_tool();
 
-    // TODO: Do we need more const in here?
-    const std::vector<std::unique_ptr<Tool>>& tools() const;
+    const std::vector<const std::unique_ptr<Tool>>& tools() const;
 
 private:
     const std::optional<std::reference_wrapper<Tool>> get_tool_by_id(Tool::Id tool_id);
