@@ -107,14 +107,10 @@ void App::handle_inputs() {
     if (ImGui::IsKeyPressed(ImGuiKey_E)) {
         m_tool_manager.select_tool_by_name("Eraser");
     }
-    // TODO: In practice, we should call deselect_temp_tool only when all
-    // modifiers for temp tools are released, not just alt.
-    static bool prev_alt = false;
-    bool alt_pressed = io.KeyAlt && !prev_alt;
-    bool alt_released = !io.KeyAlt && prev_alt;
-    if (alt_pressed) m_tool_manager.temp_select_tool_by_name("ColorPicker");
-    else if (alt_released) m_tool_manager.deselect_temp_tool();
-    prev_alt = io.KeyAlt;
+
+    std::optional<std::string> temp_tool = resolve_temp_tool(io);
+    if (temp_tool.has_value()) m_tool_manager.temp_select_tool_by_name(temp_tool.value());
+    else m_tool_manager.deselect_temp_tool();
 
     auto tool_opt = m_tool_manager.get_selected_tool();
     if (tool_opt.has_value()) {
@@ -130,10 +126,10 @@ void App::handle_inputs() {
         bool prev_mouse_down = m_user_state.prev_cursor.has_value();
         bool mouse_pressed = !prev_mouse_down && m_window.is_mouse_down();
         bool mouse_released = prev_mouse_down && !m_window.is_mouse_down();
+
         if (mouse_pressed) tool.on_mouse_press(m_canvas, m_user_state);
         else if (mouse_released) tool.on_mouse_release(m_canvas, m_user_state);
         else if (m_window.is_mouse_down()) tool.on_mouse_down(m_canvas, m_user_state);
-        prev_mouse_down = m_window.is_mouse_down();
     }
     
     if (m_window.is_mouse_down()) {
@@ -141,6 +137,12 @@ void App::handle_inputs() {
     } else {
         m_user_state.prev_cursor = std::nullopt;
     }
+}
+
+std::optional<std::string> App::resolve_temp_tool(const ImGuiIO& io) {
+    std::optional<std::string> temp_tool = std::nullopt;
+    if (io.KeyAlt) temp_tool = "Color Picker";
+    return temp_tool;
 }
 
 void App::update_user_state_cursor() {

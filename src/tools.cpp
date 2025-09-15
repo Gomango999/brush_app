@@ -103,7 +103,7 @@ const std::vector<std::unique_ptr<Tool>>& ToolManager::tools() const {
 
 
 ColorPicker::ColorPicker() {
-    m_name = "ColorPicker";
+    m_name = "Color Picker";
 }
 
 void ColorPicker::on_mouse_down(Canvas& canvas, UserState& user_state) {

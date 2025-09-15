@@ -2,12 +2,14 @@
 #include <string>
 
 #include <glm/fwd.hpp>
+#include <imgui.h>
 
 #include "canvas.h"
 #include "gui.h"
 #include "tools.h"
 #include "user_state.h"
 #include "window.h"
+#include <optional>
 
 class App {
 public:
@@ -40,6 +42,7 @@ private:
     const double m_target_display_dt = 1.0 / m_target_display_fps;
 
     void handle_inputs();
+    std::optional<std::string> resolve_temp_tool(const ImGuiIO& io);
     void update_user_state_cursor();
     void handle_cursor();
 
