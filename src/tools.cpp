@@ -4,8 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "tools.h"
+#include <glm/fwd.hpp>
+
 #include "brush.h"
+#include "canvas.h"
+#include "tools.h"
+#include "user_state.h"
 
 Tool::Tool() {
     static Id next_id = 0;
@@ -18,6 +22,7 @@ Tool::Tool() {
 ToolManager::ToolManager() {
     m_tools.push_back(std::make_unique<Pen>());
     m_tools.push_back(std::make_unique<Eraser>());
+    m_tools.push_back(std::make_unique<ColorPicker>());
 
     m_selected_tool = !m_tools.empty() ? std::optional{ m_tools[0]->id() } : std::nullopt;
 }
@@ -28,24 +33,46 @@ std::optional<std::reference_wrapper<Tool>> ToolManager::get_selected_tool() {
 }
 
 void ToolManager::select_tool_by_id(Tool::Id tool_id) {
+    // Cannot change tools while temp selecting another tool
+    if (m_prev_tool.has_value()) return;
+
     if (get_tool_by_id(tool_id).has_value()) {
-        m_prev_tool = m_selected_tool;
         m_selected_tool = tool_id;
     }
 }
 
 void ToolManager::select_tool_by_name(std::string name) {
+    // Cannot change tools while temp selecting another tool
+    if (m_prev_tool.has_value()) return;
+
     auto tool = get_tool_by_name(name);
     if (tool.has_value()) {
-        m_prev_tool = m_selected_tool;
         m_selected_tool = tool.value().get().id();
     }
 }
 
-void ToolManager::select_previous_tool() {
-    std::swap(m_prev_tool, m_selected_tool);
+void ToolManager::temp_select_tool_by_id(Tool::Id tool_id) {
+    if (!m_prev_tool.has_value()) m_prev_tool = m_selected_tool;
+
+    if (get_tool_by_id(tool_id).has_value()) {
+        m_selected_tool = tool_id;
+    }
 }
 
+void ToolManager::temp_select_tool_by_name(std::string name) {
+    if (!m_prev_tool.has_value()) m_prev_tool = m_selected_tool;
+
+    auto tool = get_tool_by_name(name);
+    if (tool.has_value()) {
+        m_selected_tool = tool.value().get().id();
+    }
+}
+
+void ToolManager::deselect_temp_tool() {
+    if (!m_prev_tool.has_value()) return;
+    m_selected_tool = m_prev_tool.value();
+    m_prev_tool = std::nullopt;
+}
 
 const std::optional<std::reference_wrapper<Tool>> ToolManager::get_tool_by_id(Tool::Id tool_id) {
     return find_tool([tool_id](const auto& tool) {
@@ -74,3 +101,14 @@ const std::vector<std::unique_ptr<Tool>>& ToolManager::tools() const {
 }
 
 
+
+ColorPicker::ColorPicker() {
+    m_name = "ColorPicker";
+}
+
+void ColorPicker::on_mouse_down(Canvas& canvas, UserState& user_state) {
+    std::optional<glm::vec3> color_opt = canvas.get_color_at_pos(user_state.cursor.pos);
+    if (color_opt.has_value()) {
+        user_state.selected_color = color_opt.value();
+    }
+}

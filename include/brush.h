@@ -43,13 +43,13 @@ protected:
 
 };
 
-class Pen : public Brush {
+class Pen final : public Brush {
 public:
     Pen();
     void set_blend_mode(bool is_alpha_locked);
 };
 
-class Eraser : public Brush {
+class Eraser final : public Brush {
 public:
     Eraser();
     void set_blend_mode(bool _is_alpha_locked);

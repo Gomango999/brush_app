@@ -47,7 +47,10 @@ public:
     std::optional<std::reference_wrapper<Tool>> get_selected_tool();
     void select_tool_by_id(Tool::Id tool_id);
     void select_tool_by_name(std::string name);
-    void select_previous_tool();
+
+    void temp_select_tool_by_id(Tool::Id tool_id);
+    void temp_select_tool_by_name(std::string name);
+    void deselect_temp_tool();
 
     const std::vector<std::unique_ptr<Tool>>& tools() const;
 
@@ -57,4 +60,10 @@ private:
 
     template<typename Predicate>
     const std::optional<std::reference_wrapper<Tool>> find_tool(Predicate&& pred);
+};
+
+class ColorPicker final : public Tool {
+public:
+    ColorPicker();
+    void on_mouse_down(Canvas& canvas, UserState& user_state) override;
 };

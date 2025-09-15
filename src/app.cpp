@@ -107,6 +107,14 @@ void App::handle_inputs() {
     if (ImGui::IsKeyPressed(ImGuiKey_E)) {
         m_tool_manager.select_tool_by_name("Eraser");
     }
+    // TODO: In practice, we should call deselect_temp_tool only when all
+    // modifiers for temp tools are released, not just alt.
+    static bool prev_alt = false;
+    bool alt_pressed = io.KeyAlt && !prev_alt;
+    bool alt_released = !io.KeyAlt && prev_alt;
+    if (alt_pressed) m_tool_manager.temp_select_tool_by_name("ColorPicker");
+    else if (alt_released) m_tool_manager.deselect_temp_tool();
+    prev_alt = io.KeyAlt;
 
     auto tool_opt = m_tool_manager.get_selected_tool();
     if (tool_opt.has_value()) {
@@ -117,16 +125,15 @@ void App::handle_inputs() {
             if (ImGui::IsKeyPressed(ImGuiKey_3)) brush->increase_size();
             if (ImGui::IsKeyPressed(ImGuiKey_2)) brush->decrease_opacity();
             if (ImGui::IsKeyPressed(ImGuiKey_4)) brush->increase_opacity();
-            if (m_window.is_mouse_down()) brush->on_mouse_down(m_canvas, m_user_state);
-        } else {
-            // TODO: Add back in color picking
-            //if (m_window.is_mouse_down() && io.KeyAlt) {
-            //    std::optional<glm::vec3> color_opt = m_canvas.get_color_at_pos(m_user_state.cursor.pos);
-            //    if (color_opt.has_value()) {
-            //        m_user_state.selected_color = color_opt.value();
-            //    }
-            //}
         }
+        
+        bool prev_mouse_down = m_user_state.prev_cursor.has_value();
+        bool mouse_pressed = !prev_mouse_down && m_window.is_mouse_down();
+        bool mouse_released = prev_mouse_down && !m_window.is_mouse_down();
+        if (mouse_pressed) tool.on_mouse_press(m_canvas, m_user_state);
+        else if (mouse_released) tool.on_mouse_release(m_canvas, m_user_state);
+        else if (m_window.is_mouse_down()) tool.on_mouse_down(m_canvas, m_user_state);
+        prev_mouse_down = m_window.is_mouse_down();
     }
     
     if (m_window.is_mouse_down()) {
