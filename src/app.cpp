@@ -104,9 +104,10 @@ void App::handle_inputs() {
 
     if (ImGui::IsKeyPressed(ImGuiKey_D)) {
         m_tool_manager.select_tool_by_name("Pen");
-    }
-    if (ImGui::IsKeyPressed(ImGuiKey_E)) {
+    } else if (ImGui::IsKeyPressed(ImGuiKey_E)) {
         m_tool_manager.select_tool_by_name("Eraser");
+    } else if (ImGui::IsKeyPressed(ImGuiKey_R)) {
+        m_tool_manager.select_tool_by_name("Rotate");
     }
 
     std::optional<Tool::Id> temp_tool = resolve_temp_tool(io);
@@ -199,7 +200,7 @@ void App::save_image_to_downloads() {
 
 DebugState App::generate_debug_state() {
     glm::vec2 mouse_pos = get_mouse_pos_in_canvas_window();
-    glm::vec2 canvas_pos = m_canvas.screen_space_to_world_space(mouse_pos);
+    glm::vec2 canvas_pos = m_canvas.screen_space_to_canvas_space(mouse_pos);
     return DebugState{
         m_last_dt,
         mouse_pos,
@@ -215,7 +216,7 @@ glm::vec2 App::get_mouse_pos_in_canvas_window() {
 
 glm::vec2 App::get_mouse_pos_in_canvas() {
     glm::vec2 screen_pos = get_mouse_pos_in_canvas_window();
-    glm::vec2 canvas_pos = m_canvas.screen_space_to_world_space(screen_pos);
+    glm::vec2 canvas_pos = m_canvas.screen_space_to_canvas_space(screen_pos);
     return canvas_pos;
 }
 

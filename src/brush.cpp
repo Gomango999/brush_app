@@ -60,7 +60,7 @@ void Brush::on_mouse_down(Canvas& canvas, UserState& user_state) {
 
     if (!user_state.prev_cursor.has_value()) {
         CursorState cursor = user_state.cursor;
-        cursor.pos = canvas.screen_space_to_world_space(cursor.pos);
+        cursor.pos = canvas.screen_space_to_canvas_space(cursor.pos);
         draw_at_point(
             layer.size(),
             cursor.pos,
@@ -71,8 +71,8 @@ void Brush::on_mouse_down(Canvas& canvas, UserState& user_state) {
     } else {
         CursorState start = user_state.prev_cursor.value();
         CursorState end = user_state.cursor;
-        start.pos = canvas.screen_space_to_world_space(start.pos);
-        end.pos = canvas.screen_space_to_world_space(end.pos);
+        start.pos = canvas.screen_space_to_canvas_space(start.pos);
+        end.pos = canvas.screen_space_to_canvas_space(end.pos);
         draw_segment(layer.size(), start, end, user_state.selected_color, layer.is_alpha_locked());
     }
 

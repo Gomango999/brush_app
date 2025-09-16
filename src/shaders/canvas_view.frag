@@ -7,6 +7,6 @@ uniform sampler2D u_canvas;
 out vec4 frag_color;
 
 void main() {
-    frag_color = texture(u_canvas, v_tex_coord);
+    frag_color = texture(u_canvas, vec2(v_tex_coord.x, v_tex_coord.y));
 }
 

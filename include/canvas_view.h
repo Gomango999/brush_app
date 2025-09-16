@@ -1,4 +1,5 @@
 #pragma once
+#include <optional>
 
 #include <glm/glm.hpp>
 
@@ -24,7 +25,7 @@ public:
 	float rotation() const { return m_rotation; }
 	glm::mat3 get_transform() const;
 
-	glm::vec2 screen_space_to_world_space(glm::vec2 point) const;
+	glm::vec2 screen_space_to_canvas_space(glm::vec2 point) const;
 
 	// All arguments are given in screen space
 	void zoom_into_point(glm::vec2 point, float zoom_factor);

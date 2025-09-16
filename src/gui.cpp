@@ -132,7 +132,8 @@ void GUI::define_canvas_window(Canvas& canvas) {
     ImGui::Image(
         (ImTextureID)canvas.screen_texture().id(),
         //(ImTextureID)canvas.output_texture().id(),
-        to_imvec(m_canvas_window_size)
+        to_imvec(m_canvas_window_size),
+        ImVec2(0, 1), ImVec2(1, 0) // Flips image vertically, to match OpenGL convention
     );
     ImGui::End();
 }

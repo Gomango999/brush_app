@@ -26,6 +26,7 @@ ToolManager::ToolManager() {
     m_tools.push_back(std::make_unique<ColorPicker>());
     m_tools.push_back(std::make_unique<Zoom>());
     m_tools.push_back(std::make_unique<Pan>());
+    m_tools.push_back(std::make_unique<Rotate>());
 
     m_selected_tool = !m_tools.empty() ? std::optional{ m_tools[0]->id() } : std::nullopt;
 }
@@ -116,7 +117,7 @@ ColorPicker::ColorPicker() {
 }
 
 void ColorPicker::on_mouse_down(Canvas& canvas, UserState& user_state) {
-    glm::vec2 cursor_pos = canvas.screen_space_to_world_space(user_state.cursor.pos);
+    glm::vec2 cursor_pos = canvas.screen_space_to_canvas_space(user_state.cursor.pos);
     std::optional<glm::vec3> color_opt = canvas.get_color_at_pos(cursor_pos);
     if (color_opt.has_value()) {
         user_state.selected_color = color_opt.value();
@@ -143,6 +144,25 @@ void Pan::on_mouse_down(Canvas& canvas, UserState& user_state) {
     glm::vec2 offset = user_state.cursor.pos - user_state.prev_cursor.value().pos;
     canvas.move(offset);
 }
+
+Rotate::Rotate() {
+    m_name = "Rotate";
+}
+
+static float angle_between(const glm::vec2& u, const glm::vec2& v) {
+    return std::atan2(u.x * v.y - u.y * v.x, glm::dot(u, v));
+}
+
+void Rotate::on_mouse_down(Canvas& canvas, UserState& user_state) {
+    if (!user_state.prev_cursor.has_value()) return;
+    
+    glm::vec2 u = user_state.prev_cursor.value().pos - (canvas.window_size() / 2.0f);
+    glm::vec2 v = user_state.cursor.pos - (canvas.window_size() / 2.0f);
+    float angle = angle_between(u, v);
+
+    canvas.rotate(angle);
+}
+
 
 // The basic template for creating a new tool:
 //class Tool {

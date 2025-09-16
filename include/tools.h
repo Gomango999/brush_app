@@ -81,3 +81,9 @@ public:
     Pan();
     void on_mouse_down(Canvas& canvas, UserState& user_state) override;
 };
+
+class Rotate : public Tool {
+public:
+    Rotate();
+    void on_mouse_down(Canvas& canvas, UserState& user_state) override;
+};

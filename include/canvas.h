@@ -43,7 +43,7 @@ public:
 	void set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked);
 
 	// Should not need to call this. Only exposed for debugging purposes.
-	glm::vec2 screen_space_to_world_space(glm::vec2 point) const { return m_canvas_view.screen_space_to_world_space(point); }
+	glm::vec2 screen_space_to_canvas_space(glm::vec2 point) const { return m_canvas_view.screen_space_to_canvas_space(point); }
 
 	// All arguments are given in screen space
 	void zoom_into_point(glm::vec2 point, float zoom_factor) { m_canvas_view.zoom_into_point(point, zoom_factor); }
@@ -64,6 +64,7 @@ public:
 	size_t width() const { return m_output_frame_buffer.width(); }
 	size_t height() const { return m_output_frame_buffer.height(); }
 	glm::vec2 size() const { return glm::vec2(width(), height()); }
+	glm::vec2 window_size() const { return m_canvas_view.size(); }
 
 	const std::vector<Layer>& get_layers() const { return m_layers; }
 
