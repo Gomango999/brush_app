@@ -26,7 +26,7 @@ CanvasView::CanvasView(size_t canvas_width, size_t canvas_height):
     m_canvas_width = canvas_width;
     m_canvas_height = canvas_height;
 
-    m_scale = 1.0;
+    m_scale = glm::vec2(1.0, 1.0);
     m_rotation = 0.0;
     m_translation = glm::vec2(0.0, 0.0);
 }
@@ -37,17 +37,10 @@ static inline glm::mat3 translate_mat3(const glm::vec2& t) {
     return m;
 }
 
-static inline glm::mat3 scale_mat3(float s) {
+static inline glm::mat3 scale_mat3(const glm::vec2& s) {
     glm::mat3 m(1.0f);
-    m[0][0] = s;
-    m[1][1] = s;
-    return m;
-}
-
-static inline glm::mat3 scale_mat3(float sx, float sy) {
-    glm::mat3 m(1.0f);
-    m[0][0] = sx;
-    m[1][1] = sy;
+    m[0][0] = s.x;
+    m[1][1] = s.y;
     return m;
 }
 
@@ -106,10 +99,7 @@ glm::mat3 CanvasView::get_transform() const {
         m_frame_buffer.size(), 
         glm::vec2(m_canvas_width, m_canvas_height)
     );
-    glm::mat3 screen_to_default = scale_mat3(
-        default_canvas_size.x / m_frame_buffer.width(),
-        default_canvas_size.y / m_frame_buffer.height()
-    );
+    glm::mat3 screen_to_default = scale_mat3(default_canvas_size / m_frame_buffer.size());
     return translate_mat3(m_translation) * rotate_mat3(m_rotation)
         * scale_mat3(m_scale) * screen_to_default;
 }
@@ -133,11 +123,6 @@ glm::vec2 CanvasView::screen_space_to_canvas_space(glm::vec2 point) const {
     glm::vec2 canvas_bottom_left_ndc = transform * glm::vec3(-1.0, -1.0, 1.0);
     glm::vec2 canvas_top_left_ndc = transform * glm::vec3(-1.0, 1.0, 1.0);
     glm::vec2 canvas_bottom_right_ndc = transform * glm::vec3(1.0, -1.0, 1.0);
-
-    printf("canvas_bottom_left_ndc: (%f, %f)\n", canvas_bottom_left_ndc.x, canvas_bottom_left_ndc.y);
-    printf("canvas_top_left_ndc: (%f, %f)\n", canvas_top_left_ndc.x, canvas_top_left_ndc.y);
-    printf("canvas_bottom_right_ndc: (%f, %f)\n", canvas_bottom_right_ndc.x, canvas_bottom_right_ndc.y);
-    printf("m_translation: (%f, %f)\n", m_translation.x, m_translation.y);
 
     glm::vec2 normalised_point_on_canvas = glm::vec2(
         projection_ratio(point_ndc - canvas_bottom_left_ndc, canvas_bottom_right_ndc - canvas_bottom_left_ndc),
@@ -210,11 +195,10 @@ void CanvasView::move(glm::vec2 translation) {
     m_translation += ndc_translation;
 }
 
-// TODO: This is wrong, and doesn't flip horizontally. 
 void CanvasView::flip() {
-    m_scale = -m_scale;
+    m_scale.x = -m_scale.x;
     m_rotation = -m_rotation;
-    m_translation = -m_translation;
+    m_translation.x = -m_translation.x;
 }
 
 

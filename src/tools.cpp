@@ -1,7 +1,6 @@
 #include <cmath>
 #include <functional>
 #include <memory>
-#include <numbers>
 #include <optional>
 #include <string>
 #include <vector>
@@ -178,8 +177,7 @@ void Rotate::on_mouse_down(Canvas& canvas, UserState& user_state) {
     if (!user_state.shift_down) {
         canvas.set_rotation(target_rotation);
     } else {
-        const float step_size = std::numbers::pi / 4;
-        canvas.set_rotation(snap_to_step(target_rotation, step_size));
+        canvas.set_rotation(snap_to_step(target_rotation, m_step_size));
     }
 }
 

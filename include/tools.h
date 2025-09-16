@@ -1,6 +1,7 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <string>
 #include <vector>
@@ -83,6 +84,8 @@ public:
 };
 
 class Rotate : public Tool {
+    float m_step_size = std::numbers::pi / 4;
+
     float m_starting_rotation;
     float m_desired_rotation;
 public:

@@ -8,7 +8,7 @@
 #include "texture.h"
 
 class CanvasView {
-	float m_scale;
+	glm::vec2 m_scale;
 	float m_rotation; // stored in radians
 	glm::vec2 m_translation; // stored in NDC space 
 
@@ -21,7 +21,7 @@ public:
 	CanvasView(size_t canvas_width, size_t canvas_height);
 
 	glm::vec2 translation() const { return m_translation; }
-	float scale() const { return m_scale; }
+	glm::vec2 scale() const { return m_scale; }
 	float rotation() const { return m_rotation; }
 	glm::mat3 get_transform() const;
 
