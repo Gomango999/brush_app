@@ -6,6 +6,9 @@
 #include <string>
 #include <vector>
 
+#include <glm/fwd.hpp>
+
+#include "texture.h"
 #include "user_state.h"
 
 class Canvas;
@@ -26,7 +29,7 @@ public:
     virtual void on_mouse_press(Canvas& canvas, UserState& user_state) {}
     virtual void on_mouse_down(Canvas& canvas, UserState& user_state) {}
     virtual void on_mouse_release(Canvas& canvas, UserState& user_state) {}
-    virtual void set_mouse_cursor() {}
+    virtual void render_cursor(const Canvas& canvas, const glm::vec2 cursor_pos) {}
 
     // TODO: Tools should be responsible for creating their on ImGui UI settings.
 

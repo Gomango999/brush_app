@@ -31,7 +31,6 @@ Canvas::Canvas(size_t width, size_t height)
 {
     m_base_color = glm::vec3( 1.0, 1.0, 1.0 );
 
-    m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
 }
 
 bool Canvas::layer_exists(Layer::Id layer_id) {
@@ -159,14 +158,14 @@ std::optional<glm::vec3> Canvas::get_color_at_pos(glm::vec2 point) {
     return m_output_frame_buffer.get_color_at_pos(point);
 }
 
-void Canvas::bind_fbo() {
+void Canvas::bind_canvas_fbo() const {
     m_output_frame_buffer.bind();
     m_output_frame_buffer.set_viewport();
 }
 
 // Combines all the layers together in a single framebuffer.
 void Canvas::render(glm::vec2 screen_area, glm::vec2 mouse_pos) {
-    bind_fbo();
+    bind_canvas_fbo();
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -178,31 +177,9 @@ void Canvas::render(glm::vec2 screen_area, glm::vec2 mouse_pos) {
     }
     
     m_canvas_view.render(screen_area, m_output_frame_buffer.texture());
-
-    // Unbind the framebuffer. If we don't do this, this causes
-    // ImGUI to render a black screen.
-    unbind_fbo();
 }
 
-// TODO: Move this functionality into the brush itself.
-//void Canvas::render_cursor(BrushManager& brush_manager, glm::vec2 mouse_pos) {
-//    auto brush_opt = brush_manager.get_selected_brush();
-//    if (!brush_opt.has_value()) return;
-//    Brush& brush = brush_opt.value();
-//
-//    const Texture2D& output_texture = m_output_frame_buffer.texture();
-//
-//    m_cursor_program.use();
-//    output_texture.bind_to_0();
-//    m_cursor_program.set_uniform_1i("u_texture", 0);
-//    m_cursor_program.set_uniform_2f("u_tex_dim", output_texture.size());
-//    m_cursor_program.set_uniform_2f("u_mouse_pos", mouse_pos);
-//    m_cursor_program.set_uniform_1f("u_radius", brush.size());
-//
-//    GLuint dummy_vao = get_dummy_vao();
-//    glBindVertexArray(dummy_vao);
-//    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-//}
+
 
 void Canvas::save_as_png(const char* filename) const {
     std::vector<uint8_t> pixels;

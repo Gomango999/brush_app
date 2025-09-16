@@ -42,8 +42,10 @@ public:
 	bool get_layer_alpha_lock(Layer::Id layer_id);
 	void set_layer_alpha_lock(Layer::Id layer_id, bool is_alpha_locked);
 
-	// Should not need to call this. Only exposed for debugging purposes.
 	glm::vec2 screen_space_to_canvas_space(glm::vec2 point) const { return m_canvas_view.screen_space_to_canvas_space(point); }
+	float screen_space_to_canvas_space(float dist) const { return m_canvas_view.screen_space_to_canvas_space(dist); };
+	glm::vec2 canvas_space_to_screen_space(glm::vec2 point) const { return m_canvas_view.canvas_space_to_screen_space(point); }
+	float canvas_space_to_screen_space(float dist) const { return m_canvas_view.canvas_space_to_screen_space(dist); };
 
 	// All arguments are given in screen space
 	void zoom_into_point(glm::vec2 point, float zoom_factor) { m_canvas_view.zoom_into_point(point, zoom_factor); }
@@ -57,8 +59,8 @@ public:
 
 	std::optional<glm::vec3> get_color_at_pos(glm::vec2 pos);
 
-	void bind_fbo();
-	void unbind_fbo() { FrameBuffer::unbind(); }
+	void bind_canvas_fbo() const;
+	void bind_screen_fbo() const { m_canvas_view.bind_fbo(); };
 	void render(glm::vec2 screen_size, glm::vec2 mouse_pos);
 
 	void save_as_png(const char* filename) const;

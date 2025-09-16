@@ -91,6 +91,11 @@ void CanvasView::render(glm::vec2 screen_size, const Texture2D& canvas) {
     FrameBuffer::unbind();
 }
 
+void CanvasView::bind_fbo() const {
+    m_frame_buffer.bind();
+    m_frame_buffer.set_viewport();
+}
+
 // Transforms from NDC coordinates of full screen in screen space into NDC coordinates of 
 // screen space where canvas should render.
 // Order of operations: scale (aspect_ratio) -> scale (zoom) -> rotate -> translate
@@ -119,6 +124,29 @@ glm::vec2 CanvasView::screen_space_to_canvas_space(glm::vec2 point) const {
 
     return canvas_pos;
 }
+
+float CanvasView::screen_space_to_canvas_space(float dist) const {
+    glm::vec2 p1 = screen_space_to_canvas_space(glm::vec2(0, 0));
+    glm::vec2 p2 = screen_space_to_canvas_space(glm::vec2(dist, 0));
+    return glm::distance(p1, p2);
+}
+
+glm::vec2 CanvasView::canvas_space_to_screen_space(glm::vec2 point) const {
+    glm::vec2 point_ndc = (point / canvas_size()) * 2.0f - 1.0f;
+    glm::mat3 transform = get_transform();
+    glm::vec2 screen_space_ndc = transform * glm::vec3(point_ndc, 1.0f);
+    screen_space_ndc.y *= -1.0f;
+    glm::vec2 screen_space_norm = ((screen_space_ndc - 1.0f) / 2.0f);
+    glm::vec2 screen_space = screen_space_norm * m_frame_buffer.size();
+    return screen_space;
+}
+
+float CanvasView::canvas_space_to_screen_space(float dist) const {
+    glm::vec2 p1 = canvas_space_to_screen_space(glm::vec2(0, 0));
+    glm::vec2 p2 = canvas_space_to_screen_space(glm::vec2(dist, 0));
+    return glm::distance(p1, p2);
+}
+
 
 // Zooms into a point defined in screen-space.
 void CanvasView::zoom_into_point(glm::vec2 point, float zoom_factor) {

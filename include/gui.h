@@ -49,7 +49,6 @@ public:
     void define_canvas_window(Canvas& canvas);
 
 
-    bool is_hovering_canvas(glm::vec2 mouse_pos) const;
     bool is_hovering_canvas_window(glm::vec2 mouse_pos) const;
     glm::vec2 get_mouse_position_on_canvas_window(glm::vec2 mouse_pos) const;
     glm::vec2 canvas_window_pos() const { return m_canvas_window_pos; };

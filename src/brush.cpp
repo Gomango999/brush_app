@@ -12,12 +12,14 @@
 #include "canvas.h"
 #include "layer.h"
 #include "program.h"
+#include "texture.h"
 #include "vao.h"
 
 Brush::Brush() {
     m_name = "Unnamed Brush";
     m_opacity = 1.0;
     m_size = 10.0;
+    m_cursor_program = Program("../src/shaders/quad.vert", "../src/shaders/draw_circle_cursor.frag");
 }
 
 void Brush::set_program_uniforms(
@@ -42,7 +44,7 @@ void Brush::apply_program() {
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 }
 
-Program Brush::load_brush_program(const char* shader_path) {
+static Program load_brush_program(const char* shader_path) {
     return Program("../src/shaders/quad.vert", shader_path);
 }
 
@@ -56,7 +58,7 @@ void Brush::on_mouse_down(Canvas& canvas, UserState& user_state) {
     if (!layer_opt.has_value()) return;
     const Layer& layer = layer_opt.value().get();
 
-    layer.bind_fbo();
+    layer.bind_canvas_fbo();
 
     if (!user_state.prev_cursor.has_value()) {
         CursorState cursor = user_state.cursor;
@@ -78,6 +80,24 @@ void Brush::on_mouse_down(Canvas& canvas, UserState& user_state) {
 
     layer.unbind_fbo();
 }
+
+// By default, brushes use the circular cursor program.
+void Brush::render_cursor(const Canvas& canvas, const glm::vec2 cursor_pos) {
+    const Texture2D& output_texture = canvas.screen_texture();
+    output_texture.bind_to_0();
+    
+    m_cursor_program.use();
+    m_cursor_program.set_uniform_1i("u_texture", 0);
+    m_cursor_program.set_uniform_2f("u_tex_dim", output_texture.size());
+    m_cursor_program.set_uniform_2f("u_mouse_pos", cursor_pos);
+    float radius_in_pixels = canvas.canvas_space_to_screen_space(size());
+    m_cursor_program.set_uniform_1f("u_radius", radius_in_pixels);
+
+    GLuint dummy_vao = VAO::get_dummy();
+    glBindVertexArray(dummy_vao);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+}
+
 
 void Brush::draw_at_point(
     glm::vec2 image_size,

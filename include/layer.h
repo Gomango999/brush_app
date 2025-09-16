@@ -29,7 +29,7 @@ public:
     Layer(Layer&& other) noexcept;
     Layer& operator=(Layer&& other) noexcept;
 
-    void bind_fbo() const;
+    void bind_canvas_fbo() const;
     void unbind_fbo() const { FrameBuffer::unbind(); };
 
     void render();

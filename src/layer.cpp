@@ -46,7 +46,7 @@ Layer& Layer::operator=(Layer&& other) noexcept {
     return *this;
 }
 
-void Layer::bind_fbo() const {
+void Layer::bind_canvas_fbo() const {
     m_frame_buffer.bind();
     m_frame_buffer.set_viewport();
 }

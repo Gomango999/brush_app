@@ -4,6 +4,7 @@
 #include <glm/fwd.hpp>
 
 #include "program.h"
+#include "texture.h"
 #include "tools.h"
 #include "user_state.h"
 
@@ -15,6 +16,7 @@ public:
     float& opacity() { return m_opacity; }
 
     void on_mouse_down(Canvas& canvas, UserState& user_state) override;
+    void render_cursor(const Canvas& canvas, const glm::vec2 cursor_pos) override;
 
     void decrease_size();
     void increase_size();
@@ -26,6 +28,8 @@ protected:
     float m_opacity;
 
     Program m_brush_program;
+    Program m_cursor_program;
+
 
     Brush();
 
@@ -39,8 +43,6 @@ protected:
     virtual void set_blend_mode(bool is_alpha_locked) = 0;
 
     void apply_program();
-    Program load_brush_program(const char* shader_path);
-
 };
 
 class Pen final : public Brush {

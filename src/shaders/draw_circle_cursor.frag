@@ -9,13 +9,14 @@ uniform vec2 u_mouse_pos;
 uniform float u_radius;
 
 void main() {
+	vec2 mouse_pos = vec2(u_mouse_pos.x, u_tex_dim.y - u_mouse_pos.y);
+
 	vec4 base_color = texture(u_texture, tex_coord);
 
 	vec2 pixel_pos = tex_coord * u_tex_dim;
-	float dist = distance(pixel_pos, u_mouse_pos);
+	float dist = distance(pixel_pos, mouse_pos);
 
-	// TODO: `thickness` is in pixel space. We want to convert this into screen space eventually.
-	float thickness = 10.0;
+	float thickness = 1.0f;
 	float alpha = smoothstep(u_radius + thickness * 0.5, u_radius + thickness * 0.5 - 1.0, dist) -
                   smoothstep(u_radius - thickness * 0.5, u_radius - thickness * 0.5 - 1.0, dist);
 	alpha *= 0.5;

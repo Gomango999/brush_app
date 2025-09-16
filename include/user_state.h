@@ -27,6 +27,7 @@ struct UserState {
     CursorState cursor;
     std::optional<CursorState> prev_cursor;
     bool shift_down;
+    bool is_using_temp_tool;
 
     UserState() {
         selected_color = glm::vec3( 0.0, 0.0, 0.0 );
@@ -34,5 +35,6 @@ struct UserState {
         cursor = CursorState();
         prev_cursor = std::nullopt;
         shift_down = false;
+        is_using_temp_tool = false;
     };
 };

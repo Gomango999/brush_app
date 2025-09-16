@@ -47,6 +47,7 @@ private:
     void handle_cursor();
 
     void render();
+    void render_cursor();
 
     std::string get_new_image_filename();
     void save_image_to_downloads();

@@ -28,6 +28,9 @@ public:
 	glm::mat3 get_transform() const;
 
 	glm::vec2 screen_space_to_canvas_space(glm::vec2 point) const;
+	float screen_space_to_canvas_space(float dist) const;
+	glm::vec2 canvas_space_to_screen_space(glm::vec2 point) const;
+	float canvas_space_to_screen_space(float dist) const;
 
 	// All arguments are given in screen space
 	void zoom_into_point(glm::vec2 point, float zoom_factor);
@@ -38,6 +41,7 @@ public:
 	void flip();
 
 	void render(glm::vec2 screen_size, const Texture2D& canvas);
+	void bind_fbo() const;
 
 	size_t width() const { return m_frame_buffer.width(); }
 	size_t height() const { return m_frame_buffer.height(); }

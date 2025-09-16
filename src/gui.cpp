@@ -146,6 +146,7 @@ void GUI::define_debug_window(DebugState& debug_state, UserState& user_state) {
     imgui_formatted_label_text("canvas position", "(%d, %d)", int(debug_state.canvas_pos.x), int(debug_state.canvas_pos.y));
     imgui_formatted_label_text("selected layer", "%d", user_state.selected_layer.has_value() ? user_state.selected_layer.value() : -1);
     imgui_formatted_label_text("is flipped?", "%s", debug_state.is_flipped ? "true" : "false");
+    imgui_formatted_label_text("temp tool?", "%s", user_state.is_using_temp_tool ? "true" : "false");
     ImGui::End();
 }
 
@@ -241,13 +242,6 @@ void GUI::define_layer_list(Canvas& canvas, std::optional<Layer::Id>& selected_l
 
     }
     ImGui::EndChild();
-}
-
-bool GUI::is_hovering_canvas(glm::vec2 mouse_pos) const {
-    glm::vec2 top_left = m_canvas_window_pos;
-    glm::vec2 bottom_right = m_canvas_window_pos + m_canvas_display_size;
-    return mouse_pos.x >= top_left.x && mouse_pos.x < bottom_right.x
-        && mouse_pos.y >= top_left.y && mouse_pos.y < bottom_right.y;
 }
 
 bool GUI::is_hovering_canvas_window(glm::vec2 mouse_pos) const {

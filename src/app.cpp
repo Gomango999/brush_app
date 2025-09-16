@@ -4,6 +4,7 @@
 #include <ctime>
 #include <format>
 #include <iomanip>
+#include <iostream>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -11,7 +12,6 @@
 #include "imgui.h"
 #include "imgui_impl_opengl3.h"
 
-#include <glm/detail/type_vec3.hpp>
 #include <glm/fwd.hpp>
 
 #include "app.h"
@@ -121,13 +121,13 @@ void App::handle_inputs() {
     }
 
     if (ImGui::IsKeyPressed(ImGuiKey_V)) {
-        printf("Flip button pressed!");
         m_canvas.flip();
     }
 
     std::optional<Tool::Id> temp_tool = resolve_temp_tool(io);
     if (temp_tool.has_value()) m_tool_manager.temp_select_tool_by_id(temp_tool.value());
     else m_tool_manager.deselect_temp_tool();
+    m_user_state.is_using_temp_tool = temp_tool.has_value();
 
     auto tool_opt = m_tool_manager.get_selected_tool();
     if (tool_opt.has_value()) {
@@ -177,14 +177,51 @@ void App::update_user_state_cursor() {
 }
 
 void App::handle_cursor() {
+    // SOMEDAY: This will be deprecated, in favour of using the render_cursor()
+    // method of Tools to render a custom cursor for each tool. Until then, we'll 
+    // just use the standard windows cursor for these tools. That's also why we're
+    // okay with the function being a little hacky.
     ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 
-    // TODO: Move the cursor logic into the specific tools themselves. 
+    bool is_rotate_tool = false;
+    auto tool_opt = m_tool_manager.get_selected_tool();
+    if (tool_opt.has_value()) {
+        Tool& tool = tool_opt.value().get();
+        if (tool.name() == "Rotate") {
+            is_rotate_tool = true;
+        }
+    }
 
-    //glm::vec2 mouse_pos = m_window.get_mouse_pos();
-    //if (m_gui.is_hovering_canvas(mouse_pos)) {
-    //    ImGui::SetMouseCursor(ImGuiMouseCursor_None);
-    //}
+    glm::vec2 mouse_pos = m_window.get_mouse_pos();
+    if (m_gui.is_hovering_canvas_window(mouse_pos) 
+        && !m_user_state.is_using_temp_tool 
+        && !is_rotate_tool
+    ) {
+        ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+    }
+}
+
+void App::render() {
+    m_canvas.render(
+        m_gui.canvas_window_size(),
+        m_user_state.cursor.pos
+    );
+    render_cursor();
+    FrameBuffer::unbind();
+
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+    glfwSwapBuffers(m_window.window());
+}
+
+void App::render_cursor() {
+    auto tool_opt = m_tool_manager.get_selected_tool();
+    if (tool_opt.has_value()) {
+        m_canvas.bind_screen_fbo();
+
+        Tool& tool = tool_opt.value().get();
+        tool.render_cursor(m_canvas, m_user_state.cursor.pos);
+    }
 }
 
 std::string App::get_new_image_filename() {
@@ -211,6 +248,7 @@ std::string App::get_new_image_filename() {
 void App::save_image_to_downloads() {
     std::string filename = get_new_image_filename();
     m_canvas.save_as_png(filename.c_str());
+    std::cout << "Saved image: " << filename << std::endl;
 }
 
 DebugState App::generate_debug_state() {
@@ -236,17 +274,4 @@ glm::vec2 App::get_mouse_pos_in_canvas() {
     glm::vec2 canvas_pos = m_canvas.screen_space_to_canvas_space(screen_pos);
     return canvas_pos;
 }
-
-void App::render() {
-    m_canvas.render(
-        m_gui.canvas_window_size(), 
-        m_user_state.cursor.pos
-    );
-    FrameBuffer::unbind();
-
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-    glfwSwapBuffers(m_window.window());
-}
-
 
