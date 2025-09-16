@@ -184,6 +184,7 @@ void Canvas::render(glm::vec2 screen_area, glm::vec2 mouse_pos) {
 void Canvas::save_as_png(const char* filename) const {
     std::vector<uint8_t> pixels;
     m_output_frame_buffer.get_pixel_data(pixels);
+    stbi_flip_vertically_on_write(true);
     stbi_write_png(filename, width(), height(), 4, pixels.data(), width() * 4);
 }
 
