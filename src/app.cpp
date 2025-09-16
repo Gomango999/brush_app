@@ -54,20 +54,29 @@ void App::run() {
 
         handle_inputs();
 
+        DebugState debug_state = generate_debug_state();
+        m_gui.define_interface(
+            m_user_state,
+            m_canvas,
+            m_tool_manager,
+            debug_state
+        );
+
+        // We call ImGui::Render() at the internal framerate since calling it
+        // allows us to refreshes our input polling, which allows us to 
+        // process input at the internal framerate. Things like "key pressed"
+        // breaks otherwise.
+        ImGui::Render();
+
+        // We process the GPU rendering at the display framerate, which is 
+        // slower than the internal framerate. Trying to render at the
+        // internal framerate overloads the GPU, and causes us to render
+        // slower than if we had just picked a slower framerate to begin with.
         // We multiply by 0.9 since if we wait until after we hit the target_dt,
-        // we miss the next "frame cycle", so we are actually rendering at 30fps.
+        // we miss the next "frame cycle", so we are actually rendering at half
+        // the target display framerate.
         if (glfwGetTime() - m_last_update_time > m_target_display_dt * 0.9) {
-            DebugState debug_state = generate_debug_state();
-
-            m_gui.define_interface(
-                m_user_state,
-                m_canvas,
-                m_tool_manager,
-                debug_state
-            );
-
             handle_cursor();
-
             render();
             m_last_update_time = glfwGetTime();
         }
@@ -109,6 +118,11 @@ void App::handle_inputs() {
         m_tool_manager.select_tool_by_name("Eraser");
     } else if (ImGui::IsKeyPressed(ImGuiKey_R)) {
         m_tool_manager.select_tool_by_name("Rotate");
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_V)) {
+        printf("Flip button pressed!");
+        m_canvas.flip();
     }
 
     std::optional<Tool::Id> temp_tool = resolve_temp_tool(io);
@@ -202,10 +216,12 @@ void App::save_image_to_downloads() {
 DebugState App::generate_debug_state() {
     glm::vec2 mouse_pos = get_mouse_pos_in_canvas_window();
     glm::vec2 canvas_pos = m_canvas.screen_space_to_canvas_space(mouse_pos);
+    bool is_flipped = m_canvas.is_flipped();
     return DebugState{
         m_last_dt,
         mouse_pos,
-        canvas_pos
+        canvas_pos,
+        is_flipped
     };
 }
 
@@ -228,7 +244,6 @@ void App::render() {
     );
     FrameBuffer::unbind();
 
-    ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
     glfwSwapBuffers(m_window.window());

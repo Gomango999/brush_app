@@ -102,6 +102,7 @@ glm::mat3 CanvasView::get_transform() const {
         * translate_mat3(m_translation)
         * rotate_mat3(m_rotation)
         * scale_mat3(m_scale)
+        * scale_mat3(glm::vec2(m_flipped ? 1.0f : -1.0f, 1.0f))
         * scale_mat3({ 1.0f / canvas_aspect_ratio, 1.0f });
 }
 
@@ -179,7 +180,7 @@ void CanvasView::move(glm::vec2 translation) {
 }
 
 void CanvasView::flip() {
-    m_scale.x = -m_scale.x;
+    m_flipped = !m_flipped;
     m_rotation = -m_rotation;
     m_translation.x = -m_translation.x;
 }

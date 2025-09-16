@@ -14,6 +14,7 @@ struct DebugState {
     double dt;
     glm::vec2 mouse_pos;
     glm::vec2 canvas_pos;
+    bool is_flipped;
 };
 
 // GUI class responsible for defining the interface layout in Dear ImGui.

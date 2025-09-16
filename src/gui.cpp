@@ -145,6 +145,7 @@ void GUI::define_debug_window(DebugState& debug_state, UserState& user_state) {
     imgui_formatted_label_text("mouse position", "(%d, %d)", int(debug_state.mouse_pos.x), int(debug_state.mouse_pos.y));
     imgui_formatted_label_text("canvas position", "(%d, %d)", int(debug_state.canvas_pos.x), int(debug_state.canvas_pos.y));
     imgui_formatted_label_text("selected layer", "%d", user_state.selected_layer.has_value() ? user_state.selected_layer.value() : -1);
+    imgui_formatted_label_text("is flipped?", "%s", debug_state.is_flipped ? "true" : "false");
     ImGui::End();
 }
 
