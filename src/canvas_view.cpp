@@ -172,13 +172,18 @@ void CanvasView::zoom_into_point(glm::vec2 point, float zoom_factor) {
     // Max zoom should be something like 10 pixels on the screen horizontally
 }
 
+// Returns an angle between (-pi, pi]
+static float normalise_angle(float angle) {
+    while (angle < -std::numbers::pi) angle += std::numbers::pi * 2.0f;
+    while (angle >= std::numbers::pi) angle -= std::numbers::pi * 2.0f;
+    return angle;
+}
+
 // Rotates around the center of the viewport.
 // TODO: Add a version of this function that snaps to angles of 45 degrees.
 // It cannot work on deltas, instead, it needs to work on a before/after model.
 void CanvasView::rotate(float delta_radians) {
-    m_rotation += delta_radians;
-    while (m_rotation < -std::numbers::pi) m_rotation += std::numbers::pi * 2.0f;
-    while (m_rotation >= std::numbers::pi) m_rotation -= std::numbers::pi * 2.0f;
+    m_rotation = normalise_angle(m_rotation + delta_radians);
 
     glm::vec2 screen_center(width() * 0.5f, height() * 0.5f);
 
@@ -190,6 +195,10 @@ void CanvasView::rotate(float delta_radians) {
     );
 
     m_translation = new_translation;
+}
+
+void CanvasView::set_rotation(float radians) {
+    m_rotation = normalise_angle(radians);
 }
 
 void CanvasView::move(glm::vec2 translation) {

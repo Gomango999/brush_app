@@ -83,7 +83,10 @@ public:
 };
 
 class Rotate : public Tool {
+    float m_starting_rotation;
+    float m_desired_rotation;
 public:
     Rotate();
+    void on_mouse_press(Canvas& canvas, UserState& user_state) override;
     void on_mouse_down(Canvas& canvas, UserState& user_state) override;
 };

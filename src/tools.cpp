@@ -1,6 +1,7 @@
 #include <cmath>
 #include <functional>
 #include <memory>
+#include <numbers>
 #include <optional>
 #include <string>
 #include <vector>
@@ -147,10 +148,22 @@ void Pan::on_mouse_down(Canvas& canvas, UserState& user_state) {
 
 Rotate::Rotate() {
     m_name = "Rotate";
+    m_starting_rotation = 0.0f;
+    m_desired_rotation = 0.0f;
 }
 
 static float angle_between(const glm::vec2& u, const glm::vec2& v) {
     return std::atan2(u.x * v.y - u.y * v.x, glm::dot(u, v));
+}
+
+void Rotate::on_mouse_press(Canvas& canvas, UserState& user_state) {
+    m_starting_rotation = canvas.get_rotation();
+    m_desired_rotation = 0.0f;
+}
+
+static float snap_to_step(float value, float step) {
+    if (step == 0.0f) return value; 
+    return std::round(value / step) * step;
 }
 
 void Rotate::on_mouse_down(Canvas& canvas, UserState& user_state) {
@@ -159,8 +172,15 @@ void Rotate::on_mouse_down(Canvas& canvas, UserState& user_state) {
     glm::vec2 u = user_state.prev_cursor.value().pos - (canvas.window_size() / 2.0f);
     glm::vec2 v = user_state.cursor.pos - (canvas.window_size() / 2.0f);
     float angle = angle_between(u, v);
+    m_desired_rotation += angle;
 
-    canvas.rotate(angle);
+    float target_rotation = m_starting_rotation + m_desired_rotation;
+    if (!user_state.shift_down) {
+        canvas.set_rotation(target_rotation);
+    } else {
+        const float step_size = std::numbers::pi / 4;
+        canvas.set_rotation(snap_to_step(target_rotation, step_size));
+    }
 }
 
 

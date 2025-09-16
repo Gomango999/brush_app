@@ -31,6 +31,7 @@ public:
 	void zoom_into_point(glm::vec2 point, float zoom_factor);
 	void zoom_into_center(float zoom_factor) { zoom_into_point(size() * 0.5f, zoom_factor); };
 	void rotate(float delta_radians);
+	void set_rotation(float radians);
 	void move(glm::vec2 translation); 
 	void flip();
 

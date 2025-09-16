@@ -87,6 +87,7 @@ void App::handle_inputs() {
     // overwrites it with our own mouse events from m_window.
     const ImGuiIO& io = ImGui::GetIO();
     update_user_state_cursor();
+    m_user_state.shift_down = io.KeyShift;
 
     if (io.KeyCtrl && ImGui::IsKeyPressed(ImGuiKey_S, false)) {
         save_image_to_downloads();

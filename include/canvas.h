@@ -49,6 +49,8 @@ public:
 	void zoom_into_point(glm::vec2 point, float zoom_factor) { m_canvas_view.zoom_into_point(point, zoom_factor); }
 	void zoom_into_center(float zoom_factor) { m_canvas_view.zoom_into_center(zoom_factor); };
 	void rotate(float delta_radians) { m_canvas_view.rotate(delta_radians); };
+	void set_rotation(float radians) { m_canvas_view.set_rotation(radians); };
+	float get_rotation() { return m_canvas_view.rotation(); };
 	void move(glm::vec2 translation) { m_canvas_view.move(translation); };
 	void flip() { m_canvas_view.flip(); };
 

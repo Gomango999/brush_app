@@ -1,6 +1,8 @@
 #pragma once
 #include <optional>
 
+#include <glm/fwd.hpp>
+
 #include "layer.h"
 
 struct CursorState {
@@ -24,11 +26,13 @@ struct UserState {
 
     CursorState cursor;
     std::optional<CursorState> prev_cursor;
+    bool shift_down;
 
     UserState() {
         selected_color = glm::vec3( 0.0, 0.0, 0.0 );
         selected_layer = std::nullopt;
         cursor = CursorState();
         prev_cursor = std::nullopt;
+        shift_down = false;
     };
 };
