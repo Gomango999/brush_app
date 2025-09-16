@@ -144,9 +144,8 @@ glm::vec2 CanvasView::screen_space_to_world_space(glm::vec2 point) const {
     return world_pos;
 }
 
-
 // Zooms into a point defined in screen-space.
-void CanvasView::zoom(glm::vec2 point, float scale) {
+void CanvasView::zoom_into_point(glm::vec2 point, float zoom_factor) {
     glm::vec2 screen_center = m_frame_buffer.size() * 0.5f;
     glm::vec2 screen_space_offset = screen_center - point;
     glm::vec2 ndc_offset = (screen_space_offset / m_frame_buffer.size()) * 2.0f;
@@ -156,27 +155,14 @@ void CanvasView::zoom(glm::vec2 point, float scale) {
     // centre of the canvas, whereas [m_translation] stores the 
     // translation from the centre of the screen to the centre of the
     // canvas. 
-    glm::vec2 zoom_offset = point_translation * (scale - 1.0f);
+    glm::vec2 zoom_offset = point_translation * (zoom_factor - 1.0f);
     
     m_translation += zoom_offset;
-    m_scale *= scale;
+    m_scale *= zoom_factor;
 
     // TODO: Add a maximum zoom and minimum zoom
     // Min zoom should be something like width is 5% of screen space. 
-    // Max zoom should be something like 30 pixels on the screen horizontally
-}
-
-// TODO: Controls for zoom factor can be moved further out
-static float ZOOM_FACTOR = 1.1f;
-
-// Zooms into a point defined in screen-space.
-void CanvasView::zoom_into_point(glm::vec2 point) {
-    zoom(point, ZOOM_FACTOR);
-}
-
-// Zooms away from a point defined in screen-space.
-void CanvasView::zoom_out_of_point(glm::vec2 point) {
-    zoom(point, 1/ZOOM_FACTOR);
+    // Max zoom should be something like 10 pixels on the screen horizontally
 }
 
 // Rotates around the center of the viewport.

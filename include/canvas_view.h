@@ -26,22 +26,17 @@ public:
 
 	glm::vec2 screen_space_to_world_space(glm::vec2 point) const;
 
-	void zoom_into_point(glm::vec2 point);
-	void zoom_out_of_point(glm::vec2 point);
+	// All arguments are given in screen space
+	void zoom_into_point(glm::vec2 point, float zoom_factor);
+	void zoom_into_center(float zoom_factor) { zoom_into_point(size() * 0.5f, zoom_factor); };
 	void rotate(float delta_radians);
-	void move(glm::vec2 translation); // move in screen space
+	void move(glm::vec2 translation); 
 	void flip();
 
 	void render(glm::vec2 screen_size, const Texture2D& canvas);
 
-
-
 	size_t width() const { return m_frame_buffer.width(); }
 	size_t height() const { return m_frame_buffer.height(); }
+	glm::vec2 size() const { return m_frame_buffer.size(); }
 	const Texture2D& get_view_texture() const { return m_frame_buffer.texture(); }
-
-private:
-	void zoom(glm::vec2 point, float scale);
-
-	glm::mat3 aspect_ratio_mat() const;
 };

@@ -47,6 +47,7 @@ public:
     std::optional<std::reference_wrapper<Tool>> get_selected_tool();
     void select_tool_by_id(Tool::Id tool_id);
     void select_tool_by_name(std::string name);
+    std::optional<Tool::Id> lookup_tool_by_name(std::string name);
 
     void temp_select_tool_by_id(Tool::Id tool_id);
     void temp_select_tool_by_name(std::string name);
@@ -65,5 +66,12 @@ private:
 class ColorPicker final : public Tool {
 public:
     ColorPicker();
+    void on_mouse_down(Canvas& canvas, UserState& user_state) override;
+};
+
+class Zoom : public Tool {
+    float m_zoom_sensitivity = 1.1f;
+public:
+    Zoom();
     void on_mouse_down(Canvas& canvas, UserState& user_state) override;
 };

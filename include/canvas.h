@@ -45,8 +45,9 @@ public:
 	// Should not need to call this. Only exposed for debugging purposes.
 	glm::vec2 screen_space_to_world_space(glm::vec2 point) const { return m_canvas_view.screen_space_to_world_space(point); }
 
-	void zoom_into_point(glm::vec2 point) { m_canvas_view.zoom_into_point(point); }
-	void zoom_out_of_point(glm::vec2 point) { m_canvas_view.zoom_out_of_point(point); }
+	// All arguments are given in screen space
+	void zoom_into_point(glm::vec2 point, float zoom_factor) { m_canvas_view.zoom_into_point(point, zoom_factor); }
+	void zoom_into_center(float zoom_factor) { m_canvas_view.zoom_into_center(zoom_factor); };
 	void rotate(float delta_radians) { m_canvas_view.rotate(delta_radians); };
 	void move(glm::vec2 translation) { m_canvas_view.move(translation); };
 	void flip() { m_canvas_view.flip(); };

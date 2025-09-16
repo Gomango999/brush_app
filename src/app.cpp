@@ -96,9 +96,9 @@ void App::handle_inputs() {
     }
 
     if (io.MouseWheel > 0) {
-        m_canvas.zoom_into_point(m_user_state.cursor.pos);
+        m_canvas.zoom_into_point(m_user_state.cursor.pos, 1.1f);
     } else if (io.MouseWheel < 0) {
-        m_canvas.zoom_out_of_point(m_user_state.cursor.pos);
+        m_canvas.zoom_into_point(m_user_state.cursor.pos, 1.0 / 1.1f);
     };
 
     if (ImGui::IsKeyPressed(ImGuiKey_D)) {
@@ -108,8 +108,8 @@ void App::handle_inputs() {
         m_tool_manager.select_tool_by_name("Eraser");
     }
 
-    std::optional<std::string> temp_tool = resolve_temp_tool(io);
-    if (temp_tool.has_value()) m_tool_manager.temp_select_tool_by_name(temp_tool.value());
+    std::optional<Tool::Id> temp_tool = resolve_temp_tool(io);
+    if (temp_tool.has_value()) m_tool_manager.temp_select_tool_by_id(temp_tool.value());
     else m_tool_manager.deselect_temp_tool();
 
     auto tool_opt = m_tool_manager.get_selected_tool();
@@ -139,14 +139,21 @@ void App::handle_inputs() {
     }
 }
 
-std::optional<std::string> App::resolve_temp_tool(const ImGuiIO& io) {
-    std::optional<std::string> temp_tool = std::nullopt;
-    if (io.KeyAlt) temp_tool = "Color Picker";
-    return temp_tool;
+std::optional<Tool::Id> App::resolve_temp_tool(const ImGuiIO& io) {
+    std::optional<std::string> temp_tool_name = std::nullopt;
+
+    if (io.KeyCtrl && ImGui::IsKeyDown(ImGuiKey_Space)) temp_tool_name = "Zoom";
+    else if (io.KeyAlt) temp_tool_name = "Color Picker";
+
+    std::optional<Tool::Id> temp_tool_id =
+        temp_tool_name.has_value() ?
+        m_tool_manager.lookup_tool_by_name(temp_tool_name.value()) :
+        std::nullopt;
+    return temp_tool_id;
 }
 
 void App::update_user_state_cursor() {
-    glm::vec2 cursor_pos = get_mouse_pos_in_canvas();
+    glm::vec2 cursor_pos = get_mouse_pos_in_canvas_window();
     float pressure = m_window.get_pressure();
     m_user_state.cursor = CursorState(cursor_pos, pressure);
 }

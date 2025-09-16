@@ -1,3 +1,4 @@
+#include <cmath>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -23,6 +24,7 @@ ToolManager::ToolManager() {
     m_tools.push_back(std::make_unique<Pen>());
     m_tools.push_back(std::make_unique<Eraser>());
     m_tools.push_back(std::make_unique<ColorPicker>());
+    m_tools.push_back(std::make_unique<Zoom>());
 
     m_selected_tool = !m_tools.empty() ? std::optional{ m_tools[0]->id() } : std::nullopt;
 }
@@ -49,6 +51,12 @@ void ToolManager::select_tool_by_name(std::string name) {
     if (tool.has_value()) {
         m_selected_tool = tool.value().get().id();
     }
+}
+
+std::optional<Tool::Id> ToolManager::lookup_tool_by_name(std::string name) {
+    auto tool = get_tool_by_name(name);
+    if (tool.has_value()) return tool.value().get().id();
+    else return std::nullopt;
 }
 
 void ToolManager::temp_select_tool_by_id(Tool::Id tool_id) {
@@ -107,8 +115,32 @@ ColorPicker::ColorPicker() {
 }
 
 void ColorPicker::on_mouse_down(Canvas& canvas, UserState& user_state) {
-    std::optional<glm::vec3> color_opt = canvas.get_color_at_pos(user_state.cursor.pos);
+    glm::vec2 cursor_pos = canvas.screen_space_to_world_space(user_state.cursor.pos);
+    std::optional<glm::vec3> color_opt = canvas.get_color_at_pos(cursor_pos);
     if (color_opt.has_value()) {
         user_state.selected_color = color_opt.value();
     }
 }
+
+Zoom::Zoom() {
+    m_name = "Zoom";
+}
+
+void Zoom::on_mouse_down(Canvas& canvas, UserState& user_state) {
+    if (!user_state.prev_cursor.has_value()) return;
+    float distance = user_state.cursor.pos.x - user_state.prev_cursor.value().pos.x;
+    float zoom_factor = pow(m_zoom_sensitivity, distance / 25);
+    canvas.zoom_into_center(zoom_factor);
+}
+
+
+// The basic template for creating a new tool:
+//class Tool {
+//    std::string m_name;
+//    Tool();
+//    virtual void on_mouse_press(Canvas& canvas, UserState& user_state) {}
+//    virtual void on_mouse_down(Canvas& canvas, UserState& user_state) {}
+//    virtual void on_mouse_release(Canvas& canvas, UserState& user_state) {}
+//    virtual void set_mouse_cursor() {}
+//};
+
