@@ -75,3 +75,9 @@ public:
     Zoom();
     void on_mouse_down(Canvas& canvas, UserState& user_state) override;
 };
+
+class Pan : public Tool {
+public:
+    Pan();
+    void on_mouse_down(Canvas& canvas, UserState& user_state) override;
+};

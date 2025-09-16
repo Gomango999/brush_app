@@ -25,6 +25,7 @@ ToolManager::ToolManager() {
     m_tools.push_back(std::make_unique<Eraser>());
     m_tools.push_back(std::make_unique<ColorPicker>());
     m_tools.push_back(std::make_unique<Zoom>());
+    m_tools.push_back(std::make_unique<Pan>());
 
     m_selected_tool = !m_tools.empty() ? std::optional{ m_tools[0]->id() } : std::nullopt;
 }
@@ -133,6 +134,15 @@ void Zoom::on_mouse_down(Canvas& canvas, UserState& user_state) {
     canvas.zoom_into_center(zoom_factor);
 }
 
+Pan::Pan() {
+    m_name = "Pan";
+}
+
+void Pan::on_mouse_down(Canvas& canvas, UserState& user_state) {
+    if (!user_state.prev_cursor.has_value()) return;
+    glm::vec2 offset = user_state.cursor.pos - user_state.prev_cursor.value().pos;
+    canvas.move(offset);
+}
 
 // The basic template for creating a new tool:
 //class Tool {

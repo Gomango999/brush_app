@@ -95,10 +95,11 @@ void App::handle_inputs() {
         m_window.set_should_close(true);
     }
 
+    const float SCROLL_ZOOM_FACTOR = 1.12f;
     if (io.MouseWheel > 0) {
-        m_canvas.zoom_into_point(m_user_state.cursor.pos, 1.1f);
+        m_canvas.zoom_into_point(m_user_state.cursor.pos, SCROLL_ZOOM_FACTOR);
     } else if (io.MouseWheel < 0) {
-        m_canvas.zoom_into_point(m_user_state.cursor.pos, 1.0 / 1.1f);
+        m_canvas.zoom_into_point(m_user_state.cursor.pos, 1.0 / SCROLL_ZOOM_FACTOR);
     };
 
     if (ImGui::IsKeyPressed(ImGuiKey_D)) {
@@ -143,6 +144,7 @@ std::optional<Tool::Id> App::resolve_temp_tool(const ImGuiIO& io) {
     std::optional<std::string> temp_tool_name = std::nullopt;
 
     if (io.KeyCtrl && ImGui::IsKeyDown(ImGuiKey_Space)) temp_tool_name = "Zoom";
+    else if (ImGui::IsKeyDown(ImGuiKey_Space)) temp_tool_name = "Pan";
     else if (io.KeyAlt) temp_tool_name = "Color Picker";
 
     std::optional<Tool::Id> temp_tool_id =

@@ -185,7 +185,12 @@ void CanvasView::rotate(float delta_radians) {
 }
 
 void CanvasView::move(glm::vec2 translation) {
-    m_translation += translation;
+    glm::vec2 ndc_translation = glm::vec2(
+        (translation.x / m_frame_buffer.size().x) * 2.0f,
+        (translation.y / m_frame_buffer.size().y) * 2.0f
+    );
+
+    m_translation += ndc_translation;
 }
 
 void CanvasView::flip() {
