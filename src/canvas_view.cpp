@@ -16,8 +16,8 @@ static glm::vec4 canvas_bg_color = glm::vec4(0.0, 0.0, 0.0, 1.0f);
 // Initially we don't know the window size, but we need to define
 // a non-zero texture for the frame buffer. These will later be 
 // resized on every frame to account for the window size.
-static size_t INITIAL_WINDOW_WIDTH = 100;
-static size_t INITIAL_WINDOW_HEIGHT = 100;
+static size_t INITIAL_WINDOW_WIDTH = 1;
+static size_t INITIAL_WINDOW_HEIGHT = 1;
 
 CanvasView::CanvasView(size_t canvas_width, size_t canvas_height):
     m_frame_buffer(INITIAL_WINDOW_WIDTH, INITIAL_WINDOW_HEIGHT),
@@ -95,44 +95,27 @@ void CanvasView::render(glm::vec2 screen_size, const Texture2D& canvas) {
 // screen space where canvas should render.
 // Order of operations: scale (aspect_ratio) -> scale (zoom) -> rotate -> translate
 glm::mat3 CanvasView::get_transform() const {
-    glm::vec2 default_canvas_size = fit_canvas_to_screen(
-        m_frame_buffer.size(), 
-        glm::vec2(m_canvas_width, m_canvas_height)
-    );
-    glm::mat3 screen_to_default = scale_mat3(default_canvas_size / m_frame_buffer.size());
-    return translate_mat3(m_translation) * rotate_mat3(m_rotation)
-        * scale_mat3(m_scale) * screen_to_default;
-}
-
-static float projection_ratio(const glm::vec2& A, const glm::vec2& B) {
-    return glm::dot(A, B) / glm::dot(B, B);
+    float screen_aspect_ratio = (float) m_frame_buffer.height() / m_frame_buffer.width();
+    float canvas_aspect_ratio = (float) m_canvas_height / m_canvas_width;
+    return
+        scale_mat3({ screen_aspect_ratio, 1.0f })
+        * translate_mat3(m_translation)
+        * rotate_mat3(m_rotation)
+        * scale_mat3(m_scale)
+        * scale_mat3({ 1.0f / canvas_aspect_ratio, 1.0f });
 }
 
 glm::vec2 CanvasView::screen_space_to_canvas_space(glm::vec2 point) const {
-
-    glm::vec2 point_ndc = glm::vec2(
-        ((point.x / m_frame_buffer.size().x) * 2.0f - 1.0f),
-        -((point.y / m_frame_buffer.size().y) * 2.0f - 1.0f)
-    );
-
-    // We compare our point to the bottom left and top right corners 
-    // of the canvas in NDC space. We use this to generate a x and y 
-    // values in [0..1] in [normalised_point_on_canvas];
+    glm::vec2 point_ndc = (point / m_frame_buffer.size()) * 2.0f - 1.0f;
+    point_ndc.y = -point_ndc.y;
 
     glm::mat3 transform = get_transform();
-    glm::vec2 canvas_bottom_left_ndc = transform * glm::vec3(-1.0, -1.0, 1.0);
-    glm::vec2 canvas_top_left_ndc = transform * glm::vec3(-1.0, 1.0, 1.0);
-    glm::vec2 canvas_bottom_right_ndc = transform * glm::vec3(1.0, -1.0, 1.0);
+    glm::mat3 inverse_transform = glm::inverse(transform);
 
-    glm::vec2 normalised_point_on_canvas = glm::vec2(
-        projection_ratio(point_ndc - canvas_bottom_left_ndc, canvas_bottom_right_ndc - canvas_bottom_left_ndc),
-        projection_ratio(point_ndc - canvas_bottom_left_ndc, canvas_top_left_ndc - canvas_bottom_left_ndc)
-    );
+    glm::vec2 canvas_space_ndc = inverse_transform * glm::vec3(point_ndc, 1.0f);
+    glm::vec2 canvas_space_norm = (canvas_space_ndc + 1.0f) / 2.0f;
+    glm::vec2 canvas_pos = canvas_space_norm * canvas_size();
 
-    glm::vec2 canvas_pos = glm::vec2(
-        normalised_point_on_canvas.x * m_canvas_width,
-        normalised_point_on_canvas.y * m_canvas_height
-    );
     return canvas_pos;
 }
 

@@ -39,6 +39,7 @@ public:
 
 	size_t width() const { return m_frame_buffer.width(); }
 	size_t height() const { return m_frame_buffer.height(); }
+	glm::vec2 canvas_size() const { return glm::vec2(m_canvas_width, m_canvas_height); }
 	glm::vec2 size() const { return m_frame_buffer.size(); }
 	const Texture2D& get_view_texture() const { return m_frame_buffer.texture(); }
 };
